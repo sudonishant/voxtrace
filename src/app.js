@@ -1,0 +1,743 @@
+/* ============================================================
+   VOXTRACE — client-side app (production UI build)
+   Router · Recorder · Heuristic detection engine · Evidence chain
+   ============================================================ */
+"use strict";
+const VT = {};
+
+/* ---------------- utils ---------------- */
+const $ = (id) => document.getElementById(id);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let toastTimer = null;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2800);
+}
+function inr(n){ return "₹" + n.toLocaleString("en-IN"); }
+async function sha256Hex(bytes){
+  const d = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function fmtBytes(b){ return b.length < 200000 ? (b.length/1024).toFixed(1)+" KB" : (b.length/1048576).toFixed(2)+" MB"; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------------- router ---------------- */
+const ROUTES = ["home","verify","dashboard","api"];
+function parseHash(){
+  const raw = location.hash.replace(/^#\/?/, "");
+  const parts = raw.split("#");
+  return {route: parts[0] || "home", anchor: parts.slice(1).join("#") || null};
+}
+function router(){
+  let {route:h, anchor} = parseHash();
+  if(h === "pricing"){ h = "home"; anchor = anchor || "sec-pricing"; }
+  if(h === "faq"){ h = "home"; anchor = anchor || "sec-faq"; }
+  if(!ROUTES.includes(h)){ h = "home"; anchor = null; }
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id === "view-"+h));
+  const navKey = (h === "home" && anchor === "sec-pricing") ? "pricing" : h;
+  document.querySelectorAll(".nav-links a[data-nav]").forEach(a=>a.classList.toggle("active", a.dataset.nav === navKey));
+  $("navLinks").classList.remove("open");
+  if(anchor){
+    setTimeout(()=>{ const el = $(anchor) || document.getElementById(anchor);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"}); }, 80);
+  } else {
+    window.scrollTo(0,0);
+  }
+  if(h === "dashboard") VT.renderDashboard();
+  if(h === "api") VT.loadKey();
+}
+window.addEventListener("hashchange", router);
+function boot(){
+  if(boot.done) return; boot.done = true;
+  try{ router(); }catch(e){ console.error("router:", e); }
+  try{
+    const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }), {threshold:.12});
+    document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+  }catch(e){}
+  try{ drawHeroWave(); }catch(e){}
+  try{ VT.calc(); }catch(e){}
+}
+// boot as soon as DOM is ready — never wait on images/fonts/network for first paint
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+window.addEventListener("load", boot); // safety net
+$("menuBtn").addEventListener("click", ()=>$("navLinks").classList.toggle("open"));
+
+/* decorative hero waveform */
+function drawHeroWave(){
+  const mk = (fn)=>{ let p=""; for(let x=0;x<=1200;x+=4){ const y=fn(x); p += (x?(p?" L":"M "):"") + x+","+y.toFixed(1); } return p; };
+  const w1 = mk(x=> 60 + Math.sin(x*0.021)*20*Math.sin(x*0.004) + Math.sin(x*0.11)*7);
+  const w2 = mk(x=> 60 + Math.cos(x*0.017)*24*Math.cos(x*0.003+1) + Math.sin(x*0.09)*5);
+  const w3 = mk(x=> 60 + Math.sin(x*0.03+2)*14*Math.sin(x*0.006) + Math.cos(x*0.13)*4);
+  $("heroWave").setAttribute("points", w1);
+  $("heroWave2").setAttribute("points", w2);
+  $("heroWave3").setAttribute("points", w3);
+}
+
+/* ---------------- FAQ + modals ---------------- */
+document.addEventListener("click", e=>{
+  const q = e.target.closest(".faq-q");
+  if(q){
+    const item = q.parentElement, wasOpen = item.classList.contains("open");
+    document.querySelectorAll(".faq-item.open").forEach(i=>{ i.classList.remove("open"); i.querySelector(".toggle").textContent = "+"; });
+    if(!wasOpen){ item.classList.add("open"); q.querySelector(".toggle").textContent = "−"; }
+    return;
+  }
+  const mb = e.target.closest("[data-modal]");
+  if(mb){ VT.openModalKey(mb.dataset.modal); return; }
+  if(e.target === $("modalOverlay")) VT.closeModal();
+});
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") VT.closeModal(); });
+
+const MODALS = {
+  "m-ceo": {icon:"🚨", label:"Use case · High-stakes finance", title:"“Verify the CEO”",
+    body:"Before acting on a high-stakes instruction received by voice — an urgent fund transfer “from the CEO”, a vendor-account change, a confidential data request — the call is run through VOXTRACE.<br><br>A <b>low trust score is the trigger</b> to stop and verify through a second channel before money or data moves. The check takes seconds and the result is anchored as evidence for the audit trail."},
+  "m-bpo": {icon:"🏛️", label:"Use case · Banking, BPO & fintech", title:"Secure call operations",
+    body:"Banks, fintechs and BPOs verify that the caller's identity is real — not a deepfake — before trusting a voice interaction.<br><br>Tele-banking instructions, OTP-less authorisations and customer-service escalations all depend on voice. VOXTRACE adds a verification layer to those flows, with per-call pricing that scales with volume via API billing."},
+  "m-hr": {icon:"🎓", label:"Use case · HR-Tech & remote hiring", title:"Recruitment & interviews",
+    body:"Recruiters and HR platforms can verify that the person on a remote interview call is a real, live human — not a synthetic voice or a proxy candidate reading pre-recorded / AI-cloned answers.<br><br>Challenge-phrase matching asks the candidate to speak a sample text live, comparing it against expected voice patterns."},
+  "m-suite": {icon:"🚀", label:"Product roadmap", title:"Voice Authenticity Suite",
+    body:"Beyond fraud-call detection, the same detection engine extends into a broader authenticity product line — verifying <b>voice notes, podcasts, evidence recordings</b> and other audio content.<br><br><b>Longer-term positioning:</b> VOXTRACE as the underlying “authenticity infrastructure” other products and platforms plug into, rather than a single standalone app. Starting with voice deepfakes, eventually multimodal authenticity."}
+};
+VT.openModalKey = function(key){
+  const m = MODALS[key]; if(!m) return;
+  VT.openModalHTML(`<div class="m-icon">${m.icon}</div><span class="m-label">${m.label}</span><h3>${m.title}</h3><p>${m.body}</p>`);
+};
+VT.openModalHTML = function(html){
+  $("modalBody").innerHTML = html;
+  $("modalOverlay").classList.add("open");
+};
+VT.closeModal = function(){ $("modalOverlay").classList.remove("open"); };
+
+/* ---------------- challenge phrases ---------------- */
+const PHRASES = [
+  ["My voice is my identity — this call is being verified.","मेरी आवाज़ ही मेरी पहचान है — यह कॉल सत्यापित की जा रही है।"],
+  ["State your full name and today's date clearly.","अपना पूरा नाम और आज की तारीख स्पष्ट रूप से बोलिए।"],
+  ["The quick brown fox jumps over the lazy dog.","तेज़ भूरी लोमड़ी आलसी कुत्ते के ऊपर से कूदती है।"],
+  ["I confirm this instruction is given by me, in person, on this call.","मैं पुष्टि करता हूँ कि यह निर्देश मैंने स्वयं इसी कॉल पर दिया है।"],
+  ["Security phrase: saffron river mountain nine.","सुरक्षा वाक्यांश: केसरिया नदी पहाड़ नौ।"]
+];
+let phraseIdx = 0;
+VT.newPhrase = function(){
+  phraseIdx = (phraseIdx + 1) % PHRASES.length;
+  $("phraseEn").textContent = PHRASES[phraseIdx][0];
+  $("phraseHi").textContent = PHRASES[phraseIdx][1];
+};
+
+/* ---------------- recording ---------------- */
+let mediaRecorder=null, chunks=[], recStream=null, liveCtx=null, liveAnalyser=null, waveRAF=null, recT0=0, recTimer=null;
+
+VT.setMode = function(mode){
+  $("tabLive").classList.toggle("on", mode==="live");
+  $("tabFile").classList.toggle("on", mode==="file");
+  $("paneLive").style.display = mode==="live" ? "" : "none";
+  $("paneFile").style.display = mode==="file" ? "" : "none";
+  VT.currentMode = mode;
+  if(mode!=="live" && mediaRecorder && mediaRecorder.state==="recording") VT.toggleRec();
+};
+VT.currentMode = "live";
+
+VT.toggleRec = async function(){
+  if(mediaRecorder && mediaRecorder.state === "recording"){
+    mediaRecorder.stop(); return;
+  }
+  try{
+    recStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false}});
+  }catch(e){
+    toast("Mic access denied — try the Recorded Call tab with a file or demo sample."); return;
+  }
+  liveCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const src = liveCtx.createMediaStreamSource(recStream);
+  liveAnalyser = liveCtx.createAnalyser(); liveAnalyser.fftSize = 1024;
+  src.connect(liveAnalyser);
+  drawLiveWave();
+
+  chunks = [];
+  mediaRecorder = new MediaRecorder(recStream);
+  mediaRecorder.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = async ()=>{
+    cancelAnimationFrame(waveRAF);
+    clearInterval(recTimer);
+    recStream.getTracks().forEach(t=>t.stop());
+    if(liveCtx) liveCtx.close();
+    $("recBtn").classList.remove("recording");
+    $("recStatus").innerHTML = "Processing recording…";
+    const blob = new Blob(chunks, {type: mediaRecorder.mimeType || "audio/webm"});
+    if(blob.size < 4000){ $("recStatus").textContent = "Recording too short — tap to record again."; return; }
+    await loadBlob(blob, "Live call recording", "live");
+    $("recStatus").textContent = "Sample loaded ✔ — press Analyse Sample.";
+  };
+  mediaRecorder.start();
+  recT0 = Date.now();
+  $("recBtn").classList.add("recording");
+  recTimer = setInterval(()=>{
+    const s = ((Date.now()-recT0)/1000).toFixed(1);
+    $("recStatus").innerHTML = "<b>● REC</b> "+s+"s — tap to stop";
+  }, 100);
+};
+
+function drawLiveWave(){
+  const cv = $("liveWave"), ctx = cv.getContext("2d");
+  const data = new Uint8Array(liveAnalyser.fftSize);
+  function frame(){
+    if(!liveAnalyser) return;
+    liveAnalyser.getByteTimeDomainData(data);
+    ctx.fillStyle = "#E8F0FE"; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle = "#EA4335"; ctx.lineWidth = 2; ctx.beginPath();
+    for(let i=0;i<data.length;i++){
+      const x = i/data.length*cv.width;
+      const y = cv.height/2 + (data[i]-128)/128*(cv.height/2 - 6);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.stroke();
+    waveRAF = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ---------------- file input ---------------- */
+const dz = $("dropZone");
+["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop", e=>{ const f=e.dataTransfer.files[0]; if(f) loadBlob(f, f.name, "file"); });
+$("fileInput").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) loadBlob(f, f.name, "file"); });
+
+let pendingAudio = null; // {bytes:Uint8Array, buffer:AudioBuffer, label, mode}
+
+async function loadBlob(blob, label, mode){
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const ac = new (window.AudioContext||window.webkitAudioContext)();
+  let buffer;
+  try{
+    buffer = await ac.decodeAudioData(bytes.slice(0).buffer);
+  }catch(e){
+    toast("Could not decode this audio format in the browser."); return;
+  }
+  ac.close();
+  if(buffer.duration < 0.4){ toast("Sample is shorter than 0.4s — need more audio to analyse."); return; }
+  if(buffer.duration > 90){ // trim to first 90s for perf
+    const sr = buffer.sampleRate, len = Math.floor(sr*90), ch = buffer.numberOfChannels;
+    const off = new OfflineAudioContext(ch, len, sr);
+    const src = off.createBufferSource(); src.buffer = buffer; src.connect(off.destination); src.start();
+    buffer = await off.startRendering();
+  }
+  pendingAudio = {bytes, buffer, label, mode};
+  VT.currentMode = mode;
+  $("fileMeta").style.display = "";
+  $("fileName").textContent = label + " · " + buffer.duration.toFixed(1) + "s · " + fmtBytes(bytes);
+  $("analyzeBtn").disabled = false;
+}
+
+/* ---------------- demo sample synthesis ---------------- */
+function encodeWav(buffer){
+  const sr = buffer.sampleRate; let d = buffer.getChannelData(0);
+  if(buffer.numberOfChannels > 1){
+    const d2 = buffer.getChannelData(1); const m = new Float32Array(d.length);
+    for(let i=0;i<d.length;i++) m[i]=(d[i]+d2[i])/2; d = m;
+  }
+  const n = d.length, out = new Uint8Array(44 + n*2);
+  const dv = new DataView(out.buffer);
+  const ws = (o,s)=>{ for(let i=0;i<s.length;i++) out[o+i]=s.charCodeAt(i); };
+  ws(0,"RIFF"); dv.setUint32(4, 36+n*2, true); ws(8,"WAVE"); ws(12,"fmt ");
+  dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+  dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true);
+  ws(36,"data"); dv.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){
+    let v = Math.max(-1, Math.min(1, d[i]));
+    dv.setInt16(44+i*2, v<0 ? v*32768 : v*32767, true);
+  }
+  return out;
+}
+
+VT.runDemo = async function(kind){
+  toast("Synthesising "+(kind==="human"?"genuine human":"AI-cloned")+" demo sample…");
+  const sr = 16000, dur = 5.5, N = Math.floor(sr*dur);
+  const buf = new Float32Array(N);
+  if(kind === "human"){
+    // natural-ish speech: jittered f0, uneven syllables, breaths, noise floor
+    let f0 = 126, phase = 0, t = 0;
+    const rng = mulberry(42);
+    while(t < dur - 0.3){
+      const syl = 0.14 + rng()*0.16, gap = rng()<0.28 ? 0.12+rng()*0.22 : 0.02+rng()*0.05;
+      const amp = 0.5 + rng()*0.4;
+      const fTarget = 105 + rng()*70; f0 += (fTarget-f0)*0.5;
+      for(let s=0; s<Math.floor(syl*sr); s++, t+=1/sr){
+        const i = Math.floor(t*sr); if(i>=N) break;
+        const jitter = Math.sin(2*Math.PI*5.2*t)*(2.5+rng()*1.5) + (rng()-0.5)*3;
+        const f = f0 + jitter + Math.sin(2*Math.PI*(t/syl))*8;
+        phase += 2*Math.PI*f/sr;
+        const env = Math.sin(Math.PI*(s/(syl*sr)))**0.8;
+        buf[i] += amp*env*(Math.sin(phase)*0.55 + Math.sin(2*phase)*0.22 + Math.sin(3*phase)*0.12 + (rng()-0.5)*0.16);
+      }
+      // breath between some phrases
+      if(rng() < 0.3){
+        for(let s=0; s<Math.floor(0.09*sr); s++, t+=1/sr){
+          const i = Math.floor(t*sr); if(i>=N) break;
+          buf[i] += (rng()-0.5)*0.09*Math.sin(Math.PI*s/(0.09*sr));
+        }
+      }
+      t += gap;
+    }
+    for(let i=0;i<N;i++) buf[i] += (Math.random()-0.5)*0.012; // room noise floor
+  } else {
+    // clone / synthetic: locked f0, uniform rhythm, hard lowpass feel, no breaths
+    let phase = 0;
+    const f0 = 131, sylLen = 0.22, cycle = 0.27;
+    for(let i=0;i<N;i++){
+      const t = i/sr, pos = t % cycle;
+      const on = pos < sylLen;
+      const env = on ? 0.85 : 0.0;
+      phase += 2*Math.PI*f0/sr;
+      let v = env*(Math.sin(phase)*0.6 + Math.sin(2*phase)*0.25 + Math.sin(4*phase)*0.1);
+      v += env*0.06*Math.sin(phase*7.03); // metallic comb flavour
+      buf[i] = v;
+    }
+    const w = 2; // steep-ish lowpass ~kills HF sharply
+    for(let i=w;i<N-w;i++){
+      let s=0; for(let k=-w;k<=w;k++) s+=buf[i+k];
+      buf[i] = s/(2*w+1)*1.15;
+    }
+  }
+  const ac = new OfflineAudioContext(1, N, sr);
+  const b = ac.createBuffer(1, N, sr); b.copyToChannel(buf, 0);
+  const rendered = await ac.startRendering();
+  const wav = encodeWav(rendered);
+  await loadBlob(new Blob([wav], {type:"audio/wav"}),
+    (kind==="human"?"Demo — genuine human voice (synthesised preview)":"Demo — AI-cloned voice (synthesised preview)"), "file");
+  setModeUI("file");
+};
+function setModeUI(mode){
+  $("tabLive").classList.toggle("on", mode==="live");
+  $("tabFile").classList.toggle("on", mode==="file");
+  $("paneLive").style.display = mode==="live" ? "" : "none";
+  $("paneFile").style.display = mode==="file" ? "" : "none";
+}
+function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ---------------- detection engine ---------------- */
+function fftInPlace(re, im){
+  const n = re.length;
+  for(let i=1,j=0;i<n;i++){
+    let bit = n>>1;
+    for(; j&bit; bit>>=1) j ^= bit;
+    j ^= bit;
+    if(i<j){ const tr=re[i]; re[i]=re[j]; re[j]=tr; const ti=im[i]; im[i]=im[j]; im[j]=ti; }
+  }
+  for(let len=2; len<=n; len<<=1){
+    const ang = -2*Math.PI/len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for(let i=0;i<n;i+=len){
+      let cr=1, ci=0;
+      for(let j=0;j<len/2;j++){
+        const ur=re[i+j], ui=im[i+j];
+        const vr=re[i+j+len/2]*cr - im[i+j+len/2]*ci;
+        const vi=re[i+j+len/2]*ci + im[i+j+len/2]*cr;
+        re[i+j]=ur+vr; im[i+j]=ui+vi;
+        re[i+j+len/2]=ur-vr; im[i+j+len/2]=ui-vi;
+        const ncr = cr*wr - ci*wi; ci = cr*wi + ci*wr; cr = ncr;
+      }
+    }
+  }
+}
+
+function analyseBuffer(buffer){
+  const sr = buffer.sampleRate;
+  let d = buffer.getChannelData(0);
+  if(buffer.numberOfChannels > 1){
+    const d2 = buffer.getChannelData(1);
+    const m = new Float32Array(d.length);
+    for(let i=0;i<d.length;i++) m[i] = 0.5*(d[i]+d2[i]);
+    d = m;
+  }
+  const FL = 2048, HOP = 1024;
+  const win = new Float32Array(FL);
+  for(let i=0;i<FL;i++) win[i] = 0.5 - 0.5*Math.cos(2*Math.PI*i/(FL-1));
+  const nFrames = Math.max(1, Math.floor((d.length - FL)/HOP));
+  const maxFrames = 420, step = Math.max(1, Math.floor(nFrames/maxFrames));
+
+  let energies=[], flats=[], centroids=[], fluxes=[], pitches=[];
+  let prevMag = null;
+  const re = new Float32Array(FL), im = new Float32Array(FL);
+  const nyq = sr/2;
+
+  for(let f=0; f<nFrames; f+=step){
+    const off = f*HOP;
+    let e = 0;
+    for(let i=0;i<FL;i++){ const v = d[off+i]*win[i]; re[i]=v; im[i]=0; e += v*v; }
+    energies.push(e);
+    if(e < 1e-6){ prevMag = null; continue; }
+    fftInPlace(re, im);
+    const half = FL/2;
+    let magSum=0, logSum=0, cSum=0;
+    const mag = new Float32Array(half);
+    for(let k=1;k<half;k++){
+      const m = Math.sqrt(re[k]*re[k]+im[k]*im[k]);
+      mag[k]=m; magSum+=m; logSum+=Math.log(m+1e-9); cSum+=k*m;
+    }
+    const geo = Math.exp(logSum/(half-1)), arith = magSum/(half-1)+1e-12;
+    flats.push(Math.min(1, geo/arith));
+    centroids.push((cSum/(magSum+1e-12))*sr/FL);
+    if(prevMag){
+      let fl=0; for(let k=1;k<half;k++){ const dv=mag[k]-prevMag[k]; fl+=dv*dv; }
+      fluxes.push(Math.sqrt(fl));
+    }
+    prevMag = mag;
+    // pitch via autocorrelation (70–380 Hz)
+    const minLag = Math.floor(sr/380), maxLag = Math.min(Math.floor(sr/70), FL-2);
+    let best=0, bestLag=0;
+    for(let lag=minLag; lag<=maxLag; lag+=2){
+      let c=0, nrm=0;
+      for(let i=0;i<FL-lag;i+=4){ c += re[i]*re[i+lag]; nrm += re[i]*re[i]; }
+      const score = c/(nrm+1e-9);
+      if(score>best){ best=score; bestLag=lag; }
+    }
+    if(best > 0.35 && bestLag) pitches.push(sr/bestLag);
+  }
+
+  const mean = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+  const std  = a => { if(a.length<2) return 0; const m=mean(a); return Math.sqrt(mean(a.map(x=>(x-m)*(x-m)))); };
+  const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+
+  // 1 — pitch naturalness (CV of f0)
+  let cv = 0;
+  if(pitches.length >= 8){
+    const med = pitches.slice().sort((a,b)=>a-b)[Math.floor(pitches.length/2)];
+    const filt = pitches.filter(p=>p>med*0.55 && p<med*1.7);
+    const m = mean(filt); cv = m ? std(filt)/m : 0;
+  }
+  const pitchSub = pitches.length < 8 ? 55 : clamp(Math.round(cv*950 + 6), 5, 98);
+  const pitchDet = pitches.length < 8 ? "Too few voiced frames for pitch tracking." :
+    "Pitch variation (CV) measured at "+(cv*100).toFixed(1)+"% — "+(cv<0.02?"near-constant pitch is a synthetic signature":cv<0.05?"low variability, mildly synthetic-leaning":"healthy natural intonation spread");
+
+  // 2 — temporal pacing (envelope dynamics + pauses + rhythm regularity)
+  const eMean = mean(energies), eStd = std(energies);
+  const dyn = eMean ? eStd/eMean : 0;
+  const voicedThr = eMean*0.25;
+  const pauseRatio = energies.filter(e=>e<voicedThr).length/Math.max(1,energies.length);
+  const pkThr = eMean*0.6, peaks = [];
+  for(let i=1;i<energies.length-1;i++){
+    if(energies[i]>energies[i-1] && energies[i]>energies[i+1] && energies[i]>pkThr) peaks.push(i);
+  }
+  const merged = [];
+  for(const p of peaks){ if(!merged.length || p-merged[merged.length-1] > 3) merged.push(p); }
+  const iv = [];
+  for(let i=1;i<merged.length;i++) iv.push(merged[i]-merged[i-1]);
+  const ivCV = iv.length>=4 ? std(iv)/mean(iv) : 1;
+  const paceSub = clamp(Math.round(dyn*60 + pauseRatio*30 + Math.min(ivCV,1)*45 + 10), 8, 98);
+  const paceDet = "Envelope dynamics "+dyn.toFixed(2)+", pause ratio "+(pauseRatio*100).toFixed(0)+"%, rhythm regularity "+(ivCV*100).toFixed(0)+"% — "+(ivCV<0.08?"metronome-perfect periodicity typical of synthetic output":dyn<0.4?"flat pacing":"natural rhythm variation");
+
+  // 3 — spectral dynamics
+  const flStd = std(fluxes), flMean = mean(fluxes), cStd = std(centroids);
+  const fluxNorm = flMean ? flStd/flMean : 0;
+  const specSub = clamp(Math.round(fluxNorm*70 + cStd*0.14 + 20), 8, 98);
+  const specDet = "Spectral flux variability "+fluxNorm.toFixed(2)+", centroid spread "+Math.round(cStd)+" Hz — "+(cStd<120?"timbre suspiciously static":"timbre evolving naturally frame-to-frame");
+
+  // 4 — high-frequency continuity
+  const cMean = mean(centroids);
+  const flatMean = mean(flats);
+  const hfPresent = cMean > Math.min(1500, nyq*0.32);
+  const hfSub = clamp(Math.round((hfPresent?52:18) + flatMean*40 + (cStd>150?10:0)), 8, 98);
+  const hfDet = "Mean spectral centroid "+Math.round(cMean)+" Hz — "+(hfPresent?"upper-band energy intact":"energy concentrated in low band; check for abrupt vocoder roll-off");
+
+  // 5 — breathing & noise floor
+  const quietBreath = energies.filter(e=>e>eMean*0.02 && e<eMean*0.18).length/Math.max(1,energies.length);
+  const noiseSub = clamp(Math.round(quietBreath*260 + (flatMean>0.12?18:6) + 12), 8, 98);
+  const noiseDet = "Low-energy breath/pause frames at "+(quietBreath*100).toFixed(0)+"% — "+(quietBreath<0.05?"almost no breath or room tone (common in synthetic output)":"natural breath and room-tone present");
+
+  const indicators = [
+    {name:"Pitch Naturalness", w:.25, sub:pitchSub, det:pitchDet},
+    {name:"Temporal Pacing", w:.20, sub:paceSub, det:paceDet},
+    {name:"Spectral Dynamics", w:.20, sub:specSub, det:specDet},
+    {name:"High-Frequency Continuity", w:.15, sub:hfSub, det:hfDet},
+    {name:"Breathing & Noise Floor", w:.20, sub:noiseSub, det:noiseDet}
+  ];
+  let score = Math.round(clamp(indicators.reduce((s,ind)=>s+ind.sub*ind.w, 0), 2, 99));
+
+  const duration = buffer.duration;
+  const v = classify(score);
+  const margin = Math.min(Math.abs(score-75), Math.abs(score-40));
+  const confidence = (duration>=3 && margin>=8) ? "HIGH" : (duration>=1.5 ? "MEDIUM" : "LOW");
+
+  const flags = [];
+  if(pitchSub<45) flags.push("Robotic tonal consistency");
+  if(paceSub<45) flags.push("Unnatural pacing");
+  if(specSub<45) flags.push("Static timbre");
+  if(hfSub<45) flags.push("HF band anomaly");
+  if(noiseSub<45) flags.push("No breath / room tone");
+
+  return {score, verdict:v.verdict, vClass:v.vClass, confidence, flags, indicators,
+          meta:{duration:+duration.toFixed(2), sampleRate:sr, framesAnalysed:Math.ceil(nFrames/step)}};
+}
+function classify(score){
+  if(score>=75) return {verdict:"LIKELY GENUINE", vClass:"g"};
+  if(score>=55) return {verdict:"PROBABLY GENUINE — MONITOR", vClass:"g"};
+  if(score>=40) return {verdict:"SUSPICIOUS — REVIEW REQUIRED", vClass:"a"};
+  return {verdict:"LIKELY AI-GENERATED", vClass:"r"};
+}
+
+/* ---------------- analysis run & evidence ---------------- */
+let lastResult = null;
+
+VT.analyze = async function(){
+  if(!pendingAudio){ toast("Load a sample first."); return; }
+  const btn = $("analyzeBtn"); btn.disabled = true; btn.textContent = "⏳ Analysing…";
+  await new Promise(r=>setTimeout(r, 60));
+  try{
+    const {bytes, buffer, label, mode} = pendingAudio;
+    const res = analyseBuffer(buffer);
+    const hash = await sha256Hex(bytes);
+    // deterministic micro-adjustment from content hash (evidence-consistent scoring)
+    const adj = (parseInt(hash.slice(0,2),16) % 3) - 1;
+    res.score = Math.max(2, Math.min(99, res.score + adj));
+    const c = classify(res.score); res.verdict = c.verdict; res.vClass = c.vClass;
+
+    const chain = LS.get("voxtrace_chain", []);
+    const prev = chain.length ? chain[chain.length-1] : null;
+    const prevHash = prev ? prev.blockHash : "0".repeat(64);
+    const evidenceId = "VT-" + new Date().toISOString().slice(2,10).replace(/-/g,"") + "-" + hash.slice(0,4).toUpperCase();
+    const ts = Date.now();
+    const blockHash = await sha256Hex(new TextEncoder().encode(prevHash + hash + ts + evidenceId));
+    const block = {height: chain.length+1, ts, evidenceId, evidenceHash: hash, prevHash, blockHash};
+
+    lastResult = {...res, evidenceId, block, label, mode, sizeBytes: bytes.length};
+    renderResult(lastResult);
+    toast("Analysis complete — Trust Score "+res.score+"/100");
+  }catch(e){
+    console.error(e); toast("Analysis failed: "+e.message);
+  }
+  btn.disabled = false; btn.textContent = "⚡ Analyse Sample";
+};
+
+function gaugeSVG(score, cls){
+  const color = cls==="g" ? "#34A853" : cls==="a" ? "#FBBC05" : "#EA4335";
+  const pct = score/100, a = Math.PI*(1-pct);
+  const x = 100 + 78*Math.cos(a), y = 112 - 78*Math.sin(a);
+  return `
+  <path d="M 22 112 A 78 78 0 0 1 178 112" fill="none" stroke="#D2E3FC" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 22 112 A 78 78 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"/>
+  <text x="100" y="88" text-anchor="middle" font-size="36" font-weight="700" fill="#121317">${score}</text>
+  <text x="100" y="106" text-anchor="middle" font-size="11" font-weight="600" fill="#3c4043" font-family="var(--mono)">TRUST SCORE / 100</text>`;
+}
+
+function renderResult(r){
+  $("resultEmpty").style.display = "none";
+  $("resultBody").style.display = "";
+  $("gauge").innerHTML = gaugeSVG(r.score, r.vClass);
+  const v = $("verdictTxt"); v.textContent = r.verdict; v.className = "verdict "+r.vClass;
+  $("confTxt").textContent = r.confidence;
+  $("durTxt").textContent = r.meta.duration + "s";
+  $("modeTxt").textContent = r.mode === "live" ? "Live call" : "Recorded";
+  $("flagRow").innerHTML = r.flags.length
+    ? r.flags.map(f=>`<span class="flagchip bad">⚠ ${f}</span>`).join("")
+    : `<span class="flagchip ok">✔ NO RISK FLAGS</span>`;
+  $("indList").innerHTML = r.indicators.map(ind=>{
+    const c = ind.sub>=65?"g":ind.sub>=45?"a":"r";
+    return `<div class="ind">
+      <div class="top"><b>${ind.name}</b><span>${ind.sub}/100 · weight ${(ind.w*100).toFixed(0)}%</span></div>
+      <div class="bar"><i class="${c}" style="width:${ind.sub}%"></i></div>
+      <div class="det">${ind.det}</div></div>`;
+  }).join("");
+  const dt = new Date(r.block.ts);
+  $("passport").innerHTML = `
+    <h4>⛓ EVIDENCE PASSPORT — ANCHORED</h4>
+    <div class="kv"><span class="k">Evidence ID</span><span class="v">${r.evidenceId}</span></div>
+    <div class="kv"><span class="k">Source</span><span class="v">${escapeHtml(r.label)}</span></div>
+    <div class="kv"><span class="k">SHA-256</span><span class="v">${r.block.evidenceHash}</span></div>
+    <div class="kv"><span class="k">Block</span><span class="v">#${r.block.height} · ${dt.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">Block hash</span><span class="v">${r.block.blockHash.slice(0,34)}…</span></div>
+    <div class="kv"><span class="k">Prev hash</span><span class="v">${r.block.prevHash.slice(0,34)}${r.block.height===1?" (genesis)":"…"}</span></div>`;
+}
+
+VT.saveEvidence = function(){
+  if(!lastResult) return;
+  const log = LS.get("voxtrace_log", []);
+  if(log.some(x=>x.evidenceId===lastResult.evidenceId)){ toast("Already saved to the evidence log."); return; }
+  log.unshift({
+    evidenceId:lastResult.evidenceId, ts:lastResult.block.ts, mode:lastResult.mode,
+    duration:lastResult.meta.duration, score:lastResult.score, verdict:lastResult.verdict,
+    flags:lastResult.flags, label:lastResult.label,
+    hash:lastResult.block.evidenceHash, block:lastResult.block, indicators:lastResult.indicators
+  });
+  LS.set("voxtrace_log", log);
+  const chain = LS.get("voxtrace_chain", []);
+  if(!chain.some(b=>b.blockHash===lastResult.block.blockHash)){ chain.push(lastResult.block); LS.set("voxtrace_chain", chain); }
+  toast("💾 Saved — "+lastResult.evidenceId+" anchored as block #"+lastResult.block.height);
+};
+
+VT.downloadReport = function(){
+  if(!lastResult) return;
+  const r = lastResult;
+  const txt = [
+"================ VOXTRACE VERIFICATION REPORT ================",
+"Evidence ID   : "+r.evidenceId,
+"Generated     : "+new Date().toLocaleString(),
+"Source        : "+r.label,
+"Mode          : "+(r.mode==="live"?"Live call":"Recorded call"),
+"Duration      : "+r.meta.duration+"s",
+"---------------------------------------------------------------",
+"TRUST SCORE   : "+r.score+" / 100",
+"VERDICT       : "+r.verdict,
+"CONFIDENCE    : "+r.confidence,
+"FLAGS         : "+(r.flags.length?r.flags.join("; "):"None"),
+"---------------------------------------------------------------",
+"INDICATORS",
+...r.indicators.map(i=>" - "+i.name.padEnd(28)+i.sub+"/100  ("+i.det+")"),
+"---------------------------------------------------------------",
+"EVIDENCE PASSPORT",
+"SHA-256       : "+r.block.evidenceHash,
+"Block height  : #"+r.block.height,
+"Block hash    : "+r.block.blockHash,
+"Prev hash     : "+r.block.prevHash,
+"Anchored at   : "+new Date(r.block.ts).toLocaleString(),
+"---------------------------------------------------------------",
+"Engine: VOXTRACE heuristic demo engine (spectral + prosodic",
+"analysis). Not a forensic certification. Detect. Explain.",
+"Verify. Preserve.",
+"==============================================================="
+  ].join("\n");
+  downloadBlob(new Blob([txt],{type:"text/plain"}), r.evidenceId+"_report.txt");
+  toast("Report downloaded.");
+};
+function downloadBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+VT.copyHash = async function(){
+  if(!lastResult) return;
+  try{ await navigator.clipboard.writeText(lastResult.block.evidenceHash); toast("SHA-256 hash copied."); }
+  catch(e){ toast("Copy not available in this context."); }
+};
+
+/* ---------------- dashboard ---------------- */
+VT.renderDashboard = function(){
+  const log = LS.get("voxtrace_log", []);
+  const chain = LS.get("voxtrace_chain", []);
+  $("kTotal").textContent = log.length;
+  $("kAnchor").textContent = chain.length;
+  $("kAvg").textContent = log.length ? Math.round(log.reduce((s,x)=>s+x.score,0)/log.length) : "—";
+  $("kFlag").textContent = log.filter(x=>x.score<55).length;
+
+  const buckets = [0,0,0,0,0];
+  log.forEach(x=>{ buckets[Math.min(4, Math.floor(x.score/20))]++; });
+  const labels = ["0–19","20–39","40–59","60–79","80–100"];
+  const colors = ["r","r","a","g","g"];
+  const max = Math.max(1, ...buckets);
+  $("distChart").innerHTML = log.length ? buckets.map((c,i)=>
+    `<div class="dist-row"><span class="lbl">${labels[i]}</span><div class="bar"><i class="${colors[i]}" style="width:${(c/max*100).toFixed(0)}%"></i></div><span class="ct">${c}</span></div>`
+  ).join("") : `<span style="color:var(--body);font-size:13.5px">No data yet — run a verification first.</span>`;
+  VT.renderLog();
+};
+
+VT.renderLog = function(){
+  const log = LS.get("voxtrace_log", []);
+  const q = ($("logSearch").value||"").toLowerCase();
+  const rows = log.filter(x=>!q || (x.evidenceId+x.verdict+x.hash+x.label).toLowerCase().includes(q));
+  $("logBody").innerHTML = rows.length ? rows.map(x=>{
+    const c = x.score>=65?"g":x.score>=40?"a":"r";
+    return `<tr>
+      <td style="color:var(--blue-dark);font-weight:700">${x.evidenceId}</td>
+      <td>${new Date(x.ts).toLocaleString()}</td>
+      <td>${x.mode==="live"?"🔴 live":"📁 file"}</td>
+      <td>${x.duration}s</td>
+      <td class="sc ${c}">${x.score}</td>
+      <td style="font-family:var(--font);font-weight:600;font-size:12px">${x.verdict}</td>
+      <td title="${x.hash}">${x.hash.slice(0,10)}…${x.hash.slice(-6)}</td>
+      <td><button class="linkbtn" onclick="VT.viewRecord('${x.evidenceId}')">view</button></td></tr>`;
+  }).join("") : `<tr><td colspan="8" style="color:var(--body);text-align:center;padding:26px">${log.length?"No matches.":"No evidence saved yet."}</td></tr>`;
+};
+
+VT.viewRecord = function(id){
+  const log = LS.get("voxtrace_log", []);
+  const x = log.find(r=>r.evidenceId===id);
+  if(!x) return;
+  const c = x.score>=65?"g":x.score>=40?"a":"r";
+  VT.openModalHTML(`
+    <div class="m-icon" style="background:${x.score>=65?"var(--green)":x.score>=40?"var(--yellow)":"var(--red)"}">🧾</div>
+    <span class="m-label">Evidence record</span>
+    <h3>${x.evidenceId} · <span class="sc ${c}">${x.score}/100</span></h3>
+    <p><b>Verdict:</b> ${x.verdict}<br><b>Time:</b> ${new Date(x.ts).toLocaleString()}<br>
+    <b>Source:</b> ${escapeHtml(x.label)}<br><b>Flags:</b> ${x.flags.length?escapeHtml(x.flags.join("; ")):"None"}</p>
+    <p style="margin-top:12px">${x.indicators.map(i=>"• "+escapeHtml(i.name)+": <b>"+i.sub+"/100</b>").join("<br>")}</p>
+    <p style="margin-top:12px;font-family:var(--mono);font-size:11.5px;word-break:break-all">
+    sha256: ${x.hash}<br>block #${x.block.height} · ${x.block.blockHash.slice(0,26)}…</p>`);
+};
+
+VT.exportCSV = function(){
+  const log = LS.get("voxtrace_log", []);
+  if(!log.length){ toast("Nothing to export yet."); return; }
+  const head = "evidence_id,timestamp,mode,duration_s,trust_score,verdict,flags,sha256,label";
+  const csv = [head, ...log.map(x=>[
+    x.evidenceId, new Date(x.ts).toISOString(), x.mode, x.duration, x.score,
+    '"'+x.verdict.replace(/"/g,'')+'"', '"'+x.flags.join("; ")+'"', x.hash, '"'+String(x.label).replace(/"/g,'')+'"'
+  ].join(","))].join("\n");
+  downloadBlob(new Blob([csv],{type:"text/csv"}), "voxtrace_evidence_log.csv");
+  toast("CSV exported.");
+};
+
+VT.clearData = function(){
+  if(!confirm("Clear ALL saved verifications and the evidence chain? This cannot be undone.")) return;
+  localStorage.removeItem("voxtrace_log");
+  localStorage.removeItem("voxtrace_chain");
+  VT.renderDashboard();
+  toast("Evidence log cleared.");
+};
+
+/* re-verify integrity */
+const reDrop = $("reDrop");
+["dragover","dragenter"].forEach(ev=>reDrop.addEventListener(ev,e=>{e.preventDefault();reDrop.style.borderColor="var(--blue)";}));
+["dragleave","drop"].forEach(ev=>reDrop.addEventListener(ev,e=>{e.preventDefault();reDrop.style.borderColor="";}));
+reDrop.addEventListener("drop", e=>{ const f=e.dataTransfer.files[0]; if(f) reVerify(f); });
+$("reFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) reVerify(f); });
+
+async function reVerify(file){
+  $("reResult").innerHTML = `<span style="color:var(--body)">Computing SHA-256…</span>`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const hash = await sha256Hex(bytes);
+  const log = LS.get("voxtrace_log", []);
+  const match = log.find(x=>x.hash===hash);
+  $("reResult").innerHTML = match
+    ? `<div class="okbox"><b>✔ INTEGRITY VERIFIED</b><br>
+        File matches evidence record <b>${match.evidenceId}</b> (score ${match.score}/100, anchored block #${match.block.height}).
+        Content is bit-for-bit identical to the anchored sample.</div>`
+    : `<div class="badbox"><b>✘ NO MATCH IN EVIDENCE LOG</b><br>
+        Computed hash <span style="font-family:var(--mono)">${hash.slice(0,18)}…</span> is not anchored.
+        Either this file was never verified here, or it has been modified since.</div>`;
+}
+
+/* ---------------- pricing calculator ---------------- */
+VT.calc = function(){
+  const s = +$("rSmall").value, b = +$("rBiz").value, e = +$("rEnt").value;
+  $("vSmall").textContent = s; $("vBiz").textContent = b; $("vEnt").textContent = e;
+  const total = s*5000 + b*25000 + e*100000;
+  $("calcOut").textContent = inr(total) + " / month";
+};
+
+/* ---------------- api keys & leads ---------------- */
+VT.genKey = function(){
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const key = "vx_live_" + hex;
+  LS.set("voxtrace_key", key);
+  $("apiKeyBox").textContent = key;
+  toast("Sandbox API key generated.");
+};
+VT.loadKey = function(){
+  const k = LS.get("voxtrace_key", null);
+  if(k) $("apiKeyBox").textContent = k;
+};
+VT.copyKey = async function(){
+  const k = $("apiKeyBox").textContent;
+  if(!k.startsWith("vx_")){ toast("Generate a key first."); return; }
+  try{ await navigator.clipboard.writeText(k); toast("API key copied."); }catch(e){ toast("Copy not available."); }
+};
+VT.submitLead = function(){
+  const name = $("leadName").value.trim(), co = $("leadCo").value.trim(), email = $("leadEmail").value.trim();
+  if(!name || !email){ toast("Please add at least your name and email."); return; }
+  const leads = LS.get("voxtrace_leads", []);
+  leads.unshift({name, co, email, type:$("leadType").value, ts:Date.now()});
+  LS.set("voxtrace_leads", leads);
+  $("leadName").value = $("leadCo").value = $("leadEmail").value = "";
+  toast("📩 Inquiry saved — the VOXTRACE team will reach out. (Demo: stored locally.)");
+};

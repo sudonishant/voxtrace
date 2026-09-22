@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOXTRACE — AI Trust Infrastructure for Voice &amp; Digital Evidence</title>
+<meta name="description" content="VOXTRACE detects AI-generated / cloned voice, explains the risk with a single Trust Score, and preserves tamper-proof evidence. Detect. Explain. Verify. Preserve.">
+<meta property="og:title" content="VOXTRACE — Every voice deserves a Trust Score">
+<meta property="og:description" content="AI Trust Infrastructure for Voice & Digital Evidence. Detect deepfake calls, explain risk, anchor evidence.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234285F4'/%3E%3Cpath d='M14 32h6l4-12 6 24 5-16 3 4h12' stroke='%23fff' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/*STYLE*/
+</style>
+</head>
+<body>
+
+<!-- ============ SVG doodle defs ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="doodle-cloud">
+      <path d="M25 62c-11 0-20-8-20-19 0-9 6-16 14-18 3-9 12-15 22-15 11 0 20 7 23 16 9 1 16 9 16 18 0 10-9 18-20 18H25Z"
+        fill="#fff" stroke="#D2E3FC" stroke-width="3"/>
+    </g>
+    <g id="doodle-spark">
+      <path d="M20 2v12M14 8h12" stroke="#FBBC05" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="34" cy="26" r="4" fill="#EA4335"/>
+    </g>
+    <g id="doodle-arrow">
+      <path d="M4 22 C 18 4, 34 4, 46 18" fill="none" stroke="#4285F4" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 9"/>
+      <path d="M38 20 l 9 1 -3 -9" fill="none" stroke="#4285F4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g id="doodle-bulb">
+      <circle cx="32" cy="26" r="17" fill="#FBBC05" stroke="#121317" stroke-width="3"/>
+      <path d="M25 43h14M27 49h10" stroke="#121317" stroke-width="3" stroke-linecap="round"/>
+      <path d="M32 2v5M8 14l4 4M56 14l-4 4M2 30h5M57 30h5" stroke="#FBBC05" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ============ NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#/home">
+      <span class="logo">
+        <svg width="20" height="20" viewBox="0 0 64 64"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      VOX<em>TRACE</em>
+    </a>
+    <button class="nav-toggle" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#/home" data-nav="home">What is VOXTRACE</a></li>
+      <li><a href="#/home#how" data-nav="how">How it works</a></li>
+      <li><a href="#/pricing" data-nav="pricing">Pricing</a></li>
+      <li><a href="#/api" data-nav="api">API &amp; Partners</a></li>
+      <li><a href="#/dashboard" data-nav="dashboard">Dashboard</a></li>
+      <li><a href="#/verify" class="btn-verify" data-nav="verify">Verify a voice →</a></li>
+    </ul>
+  </div>
+</header>
+
+<!-- ============================================================ HOME ============================================================ -->
+<div class="view active" id="view-home">
+
+  <!-- HERO -->
+  <section class="hero gridbg">
+    <svg class="cloud c1" viewBox="0 0 95 66"><use href="#doodle-cloud"/></svg>
+    <svg class="cloud c2" viewBox="0 0 95 66"><use href="#doodle-cloud"/></svg>
+    <svg class="spark" style="left:12%;top:22%;width:40px" viewBox="0 0 40 32"><use href="#doodle-spark"/></svg>
+    <svg class="spark" style="right:14%;top:60%;width:34px" viewBox="0 0 40 32"><use href="#doodle-spark"/></svg>
+
+    <div class="container">
+      <span class="hero-kicker">🛡 AI Trust Infrastructure for Voice &amp; Digital Evidence</span>
+      <h1>Is that really <strong>the CEO</strong><br>on the call — or an <span class="hl">AI clone?</span></h1>
+      <p class="sub">Voice-cloning fraud is rising — CEO-voice scams, fake vendor calls, impersonation of employees and customers.
+        VOXTRACE analyses any voice sample and gives you one explainable <strong>Trust Score</strong>, anchored as tamper-proof evidence.</p>
+
+      <div class="hero-bar">
+        <div class="hero-pill" onclick="location.hash='#/verify'">
+          <span class="amount">Detect. Explain. Verify. Preserve.</span>
+          <span class="psub">for every voice interaction</span>
+        </div>
+        <a href="#/verify" class="hero-cta">Run a Voice Check →</a>
+      </div>
+      <p class="hero-note">Built for Indian banks · fintechs · BPOs · HR platforms — free demo, runs 100% in your browser</p>
+
+      <div class="hero-visual">
+        <div class="wave-strip">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+            <polyline id="heroWave" fill="none" stroke="#4285F4" stroke-width="2.4" opacity="0.9"/>
+            <polyline id="heroWave2" fill="none" stroke="#D2E3FC" stroke-width="2" opacity="1"/>
+            <polyline id="heroWave3" fill="none" stroke="#34A853" stroke-width="1.6" opacity="0.65"/>
+          </svg>
+          <div class="hero-chips">
+            <span class="hchip"><i style="background:var(--blue)"></i> Live call mode</span>
+            <span class="hchip"><i style="background:var(--red)"></i> Recorded call mode</span>
+            <span class="hchip"><i style="background:var(--green)"></i> SHA-256 evidence chain</span>
+            <span class="hchip"><i style="background:var(--yellow)"></i> Explainable indicators</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="what">
+    <div class="about-grid">
+      <div class="about-box">
+        <div class="bubble">
+          <h3>What is <strong>VOXTRACE?</strong></h3>
+          <p>VOXTRACE analyses a voice sample to detect whether it is <strong>AI-generated / cloned</strong> or a genuine human recording,
+             and produces a <strong>verifiable trust output</strong> for each sample.</p>
+          <p>The caller speaks a challenge phrase, the engine verifies it against expected voice patterns, and the result is anchored
+             so it cannot be tampered with — turning every check into reusable evidence.</p>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="score-ticket">
+          <div class="st-badge">✓</div>
+          <div class="st-head"><span class="pulse"></span> VOXTRACE TRUST SCORE</div>
+          <div class="st-big">92<small> / 100</small></div>
+          <div class="st-rows">
+            <div class="st-row"><span class="k">Verdict</span><span class="v ok">LIKELY GENUINE</span></div>
+            <div class="st-row"><span class="k">Confidence</span><span class="v">HIGH</span></div>
+            <div class="st-row"><span class="k">Flag</span><span class="v ok">NONE</span></div>
+            <div class="st-row"><span class="k">Evidence</span><span class="v">sha256: 9f2c…e7d1 ✓ anchored</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-text-mobile">
+      <div class="bubble">
+        <h3>What is <strong>VOXTRACE?</strong></h3>
+        <p>VOXTRACE detects whether a voice sample is AI-generated / cloned or genuinely human — and anchors the result as tamper-proof evidence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="challenge" id="how">
+    <svg class="bulb" viewBox="0 0 64 56"><use href="#doodle-bulb"/></svg>
+    <h2 class="section-title">From raw audio to anchored evidence — <strong>in 4 steps</strong></h2>
+    <p class="lead">Two input modes — <strong>Live call</strong> and <strong>Recorded call</strong>. A challenge phrase is spoken or played
+      and verified against expected voice patterns, with a confidence score attached.</p>
+
+    <div class="challenge-steps">
+      <div class="challenge-step">
+        <div class="icon-circle">🎙️</div>
+        <h3>1 · Capture</h3>
+        <p>Record live or upload a call. A challenge phrase prompts the caller to speak a known sample text.</p>
+      </div>
+      <svg class="step-arrow" viewBox="0 0 50 26"><use href="#doodle-arrow"/></svg>
+      <div class="challenge-step">
+        <div class="icon-circle red">🔎</div>
+        <h3>2 · Detect</h3>
+        <p>The engine inspects pitch dynamics, pacing, spectral flux and high-frequency continuity for synthetic signatures.</p>
+      </div>
+      <svg class="step-arrow" viewBox="0 0 50 26"><use href="#doodle-arrow"/></svg>
+      <div class="challenge-step">
+        <div class="icon-circle yellow">🧠</div>
+        <h3>3 · Decide</h3>
+        <p>One explainable Trust Score (0–100) with indicators, verdict, confidence and risk flags.</p>
+      </div>
+      <svg class="step-arrow" viewBox="0 0 50 26"><use href="#doodle-arrow"/></svg>
+      <div class="challenge-step">
+        <div class="icon-circle green">🛡️</div>
+        <h3>4 · Preserve</h3>
+        <p>Result anchored with a SHA-256 hash into a tamper-evident chain — an audit trail that can't be rewritten.</p>
+      </div>
+    </div>
+
+    <div class="modes-row">
+      <a href="#/verify" class="btn primary">🔴 Try Live Call mode</a>
+      <a href="#/verify" class="btn ghost">📁 Try Recorded Call mode</a>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section class="usecases">
+    <h2>Three calls that could ruin a business.<br>We verify all of them.</h2>
+    <p class="uc-sub">Pick a scenario — this is where VOXTRACE earns its keep.</p>
+    <div class="cards-grid">
+      <div class="cat-card">
+        <div class="cat-head"><div class="cat-icon red">🚨</div><h3>“Verify the CEO”</h3></div>
+        <p>An urgent fund-transfer instruction arrives “from the CEO”. The call runs through VOXTRACE first — a low trust score is the
+           trigger to stop and verify through a second channel before money or data moves.</p>
+        <div class="cat-tags"><span class="cat-tag hot">HIGH-STAKES</span><span class="cat-tag">Finance</span></div>
+        <button class="btn-readmore" data-modal="m-ceo">Read more</button>
+      </div>
+      <div class="cat-card">
+        <div class="cat-head"><div class="cat-icon">🏛️</div><h3>Secure call operations</h3></div>
+        <p>Banks, fintechs and BPOs verify that the caller's identity is real — not a deepfake — before trusting any voice interaction,
+           instruction or tele-banking authorisation.</p>
+        <div class="cat-tags"><span class="cat-tag">Banking</span><span class="cat-tag">BPO</span><span class="cat-tag">Fintech</span></div>
+        <button class="btn-readmore" data-modal="m-bpo">Read more</button>
+      </div>
+      <div class="cat-card">
+        <div class="cat-head"><div class="cat-icon green">🎓</div><h3>Recruitment &amp; interviews</h3></div>
+        <p>Confirm the person on a remote interview call is a real, live human — not a synthetic voice or a proxy candidate
+           playing pre-recorded / AI-cloned answers.</p>
+        <div class="cat-tags"><span class="cat-tag">HR-Tech</span><span class="cat-tag">EdTech</span></div>
+        <button class="btn-readmore" data-modal="m-hr">Read more</button>
+      </div>
+      <div class="cat-card cat-wide">
+        <div class="cat-icon">🚀</div>
+        <div style="flex:1">
+          <h3>Voice Authenticity Suite — the next line</h3>
+          <p>Beyond fraud-call detection, the same engine extends to voice notes, podcasts, evidence recordings and other audio content.
+             Long-term: VOXTRACE as the underlying <strong>authenticity infrastructure</strong> other products plug into.</p>
+        </div>
+        <button class="btn-readmore" data-modal="m-suite">Explore roadmap</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST SCORE USP -->
+  <section class="trust">
+    <div class="impact-box">
+      <div class="impact-bulb">💡</div>
+      <h2>One score. Zero ambiguity.</h2>
+      <p class="sub">The VOXTRACE Trust Score — built for people who aren't ML engineers</p>
+      <div class="impact-grid">
+        <div class="impact-item"><h3>Acts like a smoke alarm</h3><p>A single explainable number (0–100) a compliance officer or ops team can act on instantly — instead of interpreting raw model output.</p></div>
+        <div class="impact-item"><h3>Non-technical by design</h3><p>A CEO approving a wire transfer trusts one score. No data-science degree required.</p></div>
+        <div class="impact-item"><h3>Flags only when it matters</h3><p>High-risk indicators — robotic pitch, unnatural pacing, HF anomalies — surface only when the score is low.</p></div>
+        <div class="impact-item"><h3>Every score is evidence</h3><p>Each result carries a SHA-256 Evidence Passport anchored into a tamper-evident chain — ready for audit.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INDICATOR TICKETS + PILLARS -->
+  <section class="judging">
+    <p class="eyebrow">Under the hood</p>
+    <h2 class="section-title">Five things the engine listens to.</h2>
+    <p class="lead">Every Trust Score is a weighted blend of five explainable indicators — shown transparently in every report.</p>
+
+    <div class="tickets">
+      <div class="ticket-wrap"><div class="ticket-badge">25%</div>
+        <div class="ticket"><h3>Pitch Naturalness</h3><span class="bold-line">Is the intonation human?</span>
+          <p>Real voices wobble — jitter, vibrato, emotional drift. Cloned audio tends to lock onto an unnaturally constant pitch.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">20%</div>
+        <div class="ticket t-red"><h3>Temporal Pacing</h3><span class="bold-line">Does the rhythm breathe?</span>
+          <p>Humans rush, pause and hesitate. Metronome-perfect syllable periodicity is a classic synthetic signature.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">20%</div>
+        <div class="ticket t-yellow"><h3>Spectral Dynamics</h3><span class="bold-line">Is the timbre alive?</span>
+          <p>Frame-to-frame spectral flux and centroid spread — natural speech keeps evolving, vocoder output stays suspiciously static.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">15%</div>
+        <div class="ticket t-green"><h3>HF Continuity</h3><span class="bold-line">Do highs roll off naturally?</span>
+          <p>Many vocoders cut off sharply near their band limit. Abrupt high-frequency cliffs raise a flag.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">20%</div>
+        <div class="ticket t-ink"><h3>Breath &amp; Room Tone</h3><span class="bold-line">Is there a human in the room?</span>
+          <p>Breaths, micro-pauses and ambient noise floor — present in real recordings, usually absent from synthetic output.</p></div></div>
+    </div>
+
+    <p class="eyebrow" style="margin-top:clamp(48px,6vw,72px)">Product pillars</p>
+    <h2 class="section-title">A trust layer, <strong>not a point tool.</strong></h2>
+    <div class="pillars">
+      <div class="pillar-card"><div class="p-ic">🔎</div><h3 style="color:var(--blue-dark)">DETECT</h3>
+        <p>AI-generated / manipulated audio detection — voice deepfakes, cloned calls, synthetic interview audio.</p></div>
+      <div class="pillar-card pr"><div class="p-ic">🧠</div><h3 style="color:#c5221f">DECIDE</h3>
+        <p>Risk score + explainable indicators. One number a compliance officer can act on — not raw model output.</p></div>
+      <div class="pillar-card pg"><div class="p-ic">🛡️</div><h3 style="color:#188038">DEFEND</h3>
+        <p>Evidence integrity + audit trail + integrations. Results anchored so they cannot be tampered with.</p></div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="sec-pricing">
+    <svg class="spark" style="left:3%;top:16%;width:44px" viewBox="0 0 40 32"><use href="#doodle-spark"/></svg>
+    <svg style="position:absolute;right:4%;top:10%;width:70px" viewBox="0 0 64 56"><use href="#doodle-bulb"/></svg>
+    <p class="eyebrow">Business model</p>
+    <h2 class="section-title">Hybrid revenue: <strong>Subscription + Usage API + Enterprise</strong></h2>
+    <p class="lead">Predictable base revenue, upside from call volume, and large deal sizes from enterprise contracts.
+       Core sustainable revenue is B2B — businesses carry the compliance budget and the acute fraud-risk exposure.</p>
+
+    <div class="prize-table-wrap">
+      <table class="prize-table">
+        <thead><tr><th>Plan</th><th>What's included</th><th>Price / month</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Starter</b><span class="mini">Freemium entry — individuals &amp; small teams</span></td>
+            <td>100 verifications included · web console · Trust Score reports · Evidence Passport anchoring · email support</td>
+            <td>₹5,000</td>
+          </tr>
+          <tr>
+            <td><b>Business</b><span class="ribbon">Most popular</span><span class="mini">BPOs, fintechs, HR platforms</span></td>
+            <td>1,000 verifications + API access · tokenised usage beyond quota · team dashboard + exports · live-call streaming integration · priority support</td>
+            <td>₹25,000</td>
+          </tr>
+          <tr>
+            <td><b>Enterprise</b><span class="mini">Banks &amp; large-scale deployments</span></td>
+            <td>Custom volume + SLA-backed uptime · on-prem / VPC deployment · white-label &amp; licence deals · integrations + audit workflow design · dedicated success manager</td>
+            <td>₹1,00,000+</td>
+          </tr>
+          <tr class="total">
+            <td>Hybrid model</td>
+            <td>Subscription (base access) + usage-based API billing + enterprise contracts</td>
+            <td>Recommended ✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="calc-card">
+      <div class="calc-inner">
+        <h3>📈 Revenue calculator</h3>
+        <p class="hint">Illustrative math to show how tiers could stack up — drag the sliders. Defaults mirror the pitch example.</p>
+        <div class="calc-row">
+          <div class="calc-fld">
+            <label>Small customers <span class="rangeval" id="vSmall">100</span></label>
+            <input type="range" min="0" max="500" value="100" id="rSmall" oninput="VT.calc()" aria-label="Small customers">
+            <span class="unit">× ₹5,000 / month each</span>
+          </div>
+          <div class="calc-fld">
+            <label>Business customers <span class="rangeval" id="vBiz">20</span></label>
+            <input type="range" min="0" max="100" value="20" id="rBiz" oninput="VT.calc()" aria-label="Business customers">
+            <span class="unit">× ₹25,000 / month each</span>
+          </div>
+          <div class="calc-fld">
+            <label>Enterprise contracts <span class="rangeval" id="vEnt">5</span></label>
+            <input type="range" min="0" max="30" value="5" id="rEnt" oninput="VT.calc()" aria-label="Enterprise contracts">
+            <span class="unit">× ₹1,00,000 / month each</span>
+          </div>
+        </div>
+        <div class="calc-out">
+          <span class="lbl">Total hypothetical revenue</span>
+          <span class="big" id="calcOut">₹15,00,000 / month</span>
+        </div>
+        <p class="disclaim">⚠️ <span>Illustrative only — not a forecast. Real revenue depends on customer acquisition, detection quality,
+           infrastructure costs, sales cycle, and pricing validation.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOAT -->
+  <section class="moat">
+    <p class="eyebrow">Reality check → moat</p>
+    <h2 class="section-title">Where the defensible moat <strong>actually</strong> comes from</h2>
+    <p class="lead">A public detection model + hashing alone is not a moat — commercial deepfake-detection APIs already exist.
+       The long-term moat is compounding data and workflow lock-in:</p>
+    <div class="moat-grid">
+      <div class="moat-item"><h3>📊 Data flywheel</h3><p>Real-world customer data with false-positive / false-negative feedback loops improving the engine continuously.</p></div>
+      <div class="moat-item my"><h3>🇮🇳 Built for Indian voice</h3><p>Hindi + English + regional languages, noisy Indian phone-call audio, Indian enterprise workflows — validated before claiming the positioning.</p></div>
+      <div class="moat-item mg"><h3>🔗 Workflow lock-in</h3><p>Fraud-case intelligence, enterprise-system integrations, and evidence / audit workflows embedded into customer operations.</p></div>
+      <div class="moat-item mr"><h3>🤝 Distribution via partners</h3><p>White-label licensing rides an existing cybersecurity company's distribution instead of selling one customer at a time.</p></div>
+    </div>
+    <div class="reposition">
+      <div class="from"><div class="lbl">Hackathon version</div><p>AI Voice Clone Detection + Blockchain + Forensics</p></div>
+      <div class="arrow">➜</div>
+      <div class="to"><div class="lbl">Startup version</div><p>VOXTRACE — AI Trust Infrastructure · B2B SaaS + API + Enterprise · voice deepfakes today, multimodal authenticity tomorrow</p></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="sec-faq">
+    <h2>FAQs</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q">What exactly does VOXTRACE do? <span class="toggle">−</span></button>
+        <div class="faq-a">VOXTRACE analyses a voice sample to detect whether it is AI-generated / cloned or a genuine human recording. The caller speaks a challenge phrase, the engine verifies it against expected voice patterns, and produces a Trust Score plus a tamper-evident Evidence Passport. Two input modes: live call and recorded call.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is this demo the production detector? <span class="toggle">+</span></button>
+        <div class="faq-a">Not yet. This build runs a heuristic spectral engine (pitch dynamics, pacing, spectral flux, HF continuity, noise floor) fully in your browser to demonstrate the complete pipeline. The production version layers a trained ML detector (e.g. AASIST-class) tuned on Indian multilingual call audio.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What is the Trust Score? <span class="toggle">+</span></button>
+        <div class="faq-a">A single explainable number from 0–100. ≥75 is Likely Genuine, 55–74 Probably Genuine (monitor), 40–54 Suspicious (review required), &lt;40 Likely AI-Generated. Every score shows its supporting indicators and confidence, so non-technical decision makers can act instantly.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How is evidence preserved? <span class="toggle">+</span></button>
+        <div class="faq-a">Each analysed sample gets a SHA-256 hash, and the result is anchored as a block linked to the previous block's hash — a tamper-evident chain. Re-uploading the same file later lets you verify bit-for-bit integrity against the anchored record.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Who are the target buyers? <span class="toggle">+</span></button>
+        <div class="faq-a">Banks &amp; fintechs, BPOs and call centres, HR / recruitment platforms, and any enterprise that must confirm a caller's identity is real (not a deepfake) before trusting a voice interaction. B2B is the main revenue source — businesses hold the compliance budget and fraud exposure.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What are the pricing models? <span class="toggle">+</span></button>
+        <div class="faq-a">Three levers: freemium (free tier for individuals / low-volume checks), per-verification pricing for occasional users, and flat monthly plans for predictable enterprise usage. The recommended hybrid combines subscription base access + usage-based API billing + enterprise contracts.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can we white-label or license the engine? <span class="toggle">+</span></button>
+        <div class="faq-a">Yes. Cybersecurity platforms can integrate the detection engine into their own products and pay for API usage, an annual licence, and enterprise support. This scales faster than direct sales by riding a partner's existing distribution.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is the ₹15 lakh / month figure a forecast? <span class="toggle">+</span></button>
+        <div class="faq-a">No — it's illustrative math (100 × ₹5,000 + 20 × ₹25,000 + 5 × ₹1,00,000) showing how tiers could stack up. Real revenue depends on customer acquisition, detection quality, infrastructure costs, sales cycle, and pricing validation.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What's the India-specific angle? <span class="toggle">+</span></button>
+        <div class="faq-a">Hindi + English + regional languages, noisy Indian phone-call audio, and Indian enterprise workflows. This needs proper validation before claiming a "built for Indian voice environments" positioning, since detection performance on that data hasn't been measured yet.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================ VERIFY CONSOLE ============================================================ -->
+<div class="view" id="view-verify">
+  <section class="appsec gridbg">
+    <div class="container">
+      <div class="apphead">
+        <a class="backlink" href="#/home">← Back to VOXTRACE</a>
+        <p class="eyebrow">Verification Console</p>
+        <h2 class="section-title">Run a voice <strong>authenticity check</strong></h2>
+        <p class="lead">Detect whether a sample is a genuine human voice or AI-generated / cloned, get an explainable Trust Score,
+           and anchor the result as tamper-evident evidence.</p>
+      </div>
+
+      <div class="console">
+        <!-- LEFT: input -->
+        <div class="panel">
+          <div class="tabs">
+            <button class="tabbtn on" id="tabLive" onclick="VT.setMode('live')">🔴 Live Call</button>
+            <button class="tabbtn" id="tabFile" onclick="VT.setMode('file')">📁 Recorded Call</button>
+          </div>
+
+          <div class="challenge-bubble">
+            <div class="lbl">Challenge phrase · sample text / voice matching</div>
+            <div class="row2">
+              <div>
+                <div class="ph" id="phraseEn">My voice is my identity — this call is being verified.</div>
+                <div class="ph-hi" id="phraseHi">मेरी आवाज़ ही मेरी पहचान है — यह कॉल सत्यापित की जा रही है।</div>
+              </div>
+              <button class="linkbtn" onclick="VT.newPhrase()">↻ New phrase</button>
+            </div>
+          </div>
+
+          <div id="paneLive">
+            <button class="recbtn" id="recBtn" onclick="VT.toggleRec()" aria-label="Record"></button>
+            <div class="rec-status" id="recStatus">Tap to start recording · mic access required</div>
+            <canvas class="wave" id="liveWave" width="640" height="92"></canvas>
+          </div>
+
+          <div id="paneFile" style="display:none">
+            <div class="rec-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div style="font-size:38px">🎧</div>
+              <b>Drop an audio file here</b> or click to browse
+              <div style="color:var(--body);font-size:12.5px;margin-top:6px">mp3 · wav · m4a · ogg — decoded locally, never uploaded</div>
+            </div>
+            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg" style="display:none">
+            <div class="demo-row">
+              <button class="btn ghost small" onclick="VT.runDemo('human')">▶ Demo: genuine human sample</button>
+              <button class="btn ghost small" onclick="VT.runDemo('clone')">▶ Demo: AI-cloned sample</button>
+            </div>
+            <div class="demo-note">No mic / file handy? The demo buttons synthesise two test signals locally so you can see the full flow.</div>
+          </div>
+
+          <div id="fileMeta" style="display:none;margin-top:16px" class="challenge-bubble">
+            <div class="lbl">Loaded sample</div>
+            <div class="ph" id="fileName" style="font-size:14px;font-family:var(--mono)"></div>
+          </div>
+          <div style="margin-top:18px;text-align:center">
+            <button class="btn primary" id="analyzeBtn" onclick="VT.analyze()" disabled>⚡ Analyse Sample</button>
+          </div>
+        </div>
+
+        <!-- RIGHT: result -->
+        <div class="panel" id="resultCard">
+          <div class="result-empty" id="resultEmpty">
+            <div class="big-ic">🛰️</div>
+            <b>No analysis yet</b>
+            <span>Record a live sample, upload a call recording, or run a demo sample to see the Trust Score and Evidence Passport here.</span>
+          </div>
+          <div id="resultBody" style="display:none">
+            <div class="gauge-wrap"><svg id="gauge" width="200" height="120" viewBox="0 0 200 120"></svg></div>
+            <div class="verdict-line"><span class="verdict" id="verdictTxt"></span></div>
+            <div class="conf-line">Confidence: <b id="confTxt"></b> · Duration: <b id="durTxt"></b> · Mode: <b id="modeTxt"></b></div>
+            <div class="flagrow" id="flagRow"></div>
+            <div id="indList"></div>
+            <div class="passport" id="passport"></div>
+            <div class="result-actions">
+              <button class="btn primary small" onclick="VT.saveEvidence()">💾 Save to Evidence Log</button>
+              <button class="btn ghost small" onclick="VT.downloadReport()">⬇ Report</button>
+              <button class="btn ghost small" onclick="VT.copyHash()">⧉ Copy Hash</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="engine-note">ℹ️ Demo engine note: this browser build uses heuristic spectral analysis (pitch dynamics, pacing, spectral flux,
+         HF continuity, noise floor) — a functional preview of the VOXTRACE pipeline, not the production ML model. All processing happens locally in your browser.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================ DASHBOARD ============================================================ -->
+<div class="view" id="view-dashboard">
+  <section class="appsec">
+    <div class="container">
+      <div class="apphead">
+        <a class="backlink" href="#/home">← Back to VOXTRACE</a>
+        <p class="eyebrow">Operations Dashboard</p>
+        <h2 class="section-title">Evidence log <strong>&amp; analytics</strong></h2>
+        <p class="lead">Every saved verification becomes an anchored evidence record. Export the log, or re-verify any file against its stored hash.</p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="ic b">🧾</div><div><div class="n" id="kTotal">0</div><div class="l">Verifications</div></div></div>
+        <div class="kpi"><div class="ic g">📈</div><div><div class="n" id="kAvg">—</div><div class="l">Avg Trust Score</div></div></div>
+        <div class="kpi"><div class="ic r">🚩</div><div><div class="n" id="kFlag">0</div><div class="l">Flagged / low-score</div></div></div>
+        <div class="kpi"><div class="ic y">⛓️</div><div><div class="n" id="kAnchor">0</div><div class="l">Anchored blocks</div></div></div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:16px">Score distribution</h3>
+          <div id="distChart"><span style="color:var(--body);font-size:13.5px">No data yet — run a verification first.</span></div>
+        </div>
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:8px">Re-verify evidence integrity</h3>
+          <p style="color:var(--body);font-size:13.5px;margin-bottom:14px">Drop the original audio file again — VOXTRACE recomputes its SHA-256 and checks it against the anchored evidence log.</p>
+          <div class="rec-zone" id="reDrop" style="padding:22px" onclick="document.getElementById('reFile').click()">
+            <b>Drop file to re-verify</b>
+          </div>
+          <input type="file" id="reFile" accept="audio/*" style="display:none">
+          <div class="re-result" id="reResult"></div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="logSearch" placeholder="🔍 Search by ID, verdict or hash…" style="max-width:340px" oninput="VT.renderLog()">
+        <div style="margin-left:auto;display:flex;gap:10px">
+          <button class="btn ghost small" onclick="VT.exportCSV()">⬇ Export CSV</button>
+          <button class="btn danger small" onclick="VT.clearData()">🗑 Clear all data</button>
+        </div>
+      </div>
+      <div class="tblwrap">
+        <table class="log">
+          <thead><tr><th>ID</th><th>Timestamp</th><th>Mode</th><th>Dur.</th><th>Score</th><th>Verdict</th><th>Hash (sha256)</th><th></th></tr></thead>
+          <tbody id="logBody"><tr><td colspan="8" style="color:var(--body);text-align:center;padding:26px">No evidence saved yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================ API & PARTNERS ============================================================ -->
+<div class="view" id="view-api">
+  <section class="appsec">
+    <div class="container">
+      <div class="apphead">
+        <a class="backlink" href="#/home">← Back to VOXTRACE</a>
+        <p class="eyebrow">Developers &amp; Partners</p>
+        <h2 class="section-title">Plug VOXTRACE into <strong>your platform</strong></h2>
+        <p class="lead">Subscription covers dashboard access and a monthly quota; additional usage is billed via the API,
+           so revenue scales with actual call volume. Tokenised pricing keys cost directly to verification volume.</p>
+      </div>
+
+      <div class="panel">
+        <h3 style="font-size:18px">🔑 Sandbox API key</h3>
+        <p style="color:var(--body);font-size:13.5px;margin-top:4px">Generate a demo key for the sandbox environment (stored locally in your browser).</p>
+        <div class="apikey-box">
+          <code id="apiKeyBox">No key generated yet</code>
+          <button class="btn primary small" onclick="VT.genKey()">Generate key</button>
+          <button class="btn ghost small" onclick="VT.copyKey()">Copy</button>
+        </div>
+      </div>
+
+      <div class="dash-grid" style="margin-top:22px">
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:14px">Endpoints</h3>
+          <div class="endpoint"><span class="mth post">POST</span> /v1/verify <span class="desc">analyse audio, returns Trust Score</span></div>
+          <div class="endpoint"><span class="mth get">GET</span> /v1/evidence/{id} <span class="desc">fetch anchored evidence record</span></div>
+          <div class="endpoint"><span class="mth post">POST</span> /v1/verify/stream <span class="desc">live-call streaming verification</span></div>
+          <div class="endpoint"><span class="mth get">GET</span> /v1/usage <span class="desc">quota &amp; tokenised billing meters</span></div>
+          <h3 style="font-size:15px;margin:20px 0 10px">Request</h3>
+<div class="codeblock">curl -X POST https://api.voxtrace.dev/v1/verify \
+  -H <span class="s">"Authorization: Bearer $VOXTRACE_KEY"</span> \
+  -F <span class="s">"audio=@call_recording.mp3"</span> \
+  -F <span class="s">"mode=recorded"</span></div>
+        </div>
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:14px">Response</h3>
+<div class="codeblock">{
+  <span class="k">"evidence_id"</span>: <span class="s">"VT-2609-A1B2"</span>,
+  <span class="k">"trust_score"</span>: 92,
+  <span class="k">"verdict"</span>: <span class="s">"LIKELY_GENUINE"</span>,
+  <span class="k">"confidence"</span>: <span class="s">"HIGH"</span>,
+  <span class="k">"flags"</span>: [],
+  <span class="k">"indicators"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"pitch_naturalness"</span>, <span class="k">"score"</span>: 94 },
+    { <span class="k">"name"</span>: <span class="s">"temporal_pacing"</span>,  <span class="k">"score"</span>: 88 }
+  ],
+  <span class="k">"evidence"</span>: {
+    <span class="k">"sha256"</span>: <span class="s">"9f2c…e7d1"</span>,
+    <span class="k">"anchored"</span>: true,
+    <span class="k">"block_height"</span>: 1042
+  }
+}</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div>
+          <div class="partner-box">
+            <h3>🤝 White-label / API licensing</h3>
+            <p>Already selling security software? Don't compete — integrate. VOXTRACE licenses its detection engine to cybersecurity
+               platforms that ride their own existing distribution:</p>
+            <ul class="partner-list">
+              <li><b>API usage</b> — tokenised per-verification billing</li>
+              <li><b>Annual licence</b> — predictable enterprise revenue</li>
+              <li><b>Enterprise support</b> — SLAs, onboarding, tuning</li>
+            </ul>
+          </div>
+          <div class="engine-note" style="margin:18px 0 0">🚀 Roadmap: voice deepfakes today → the Voice Authenticity Suite (voice notes, podcasts, evidence recordings) → long-term authenticity infrastructure other products plug into.</div>
+        </div>
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:14px">📩 Partner / sales inquiry</h3>
+          <div class="field"><label class="fl" for="leadName">Name</label><input type="text" id="leadName" placeholder="Your name"></div>
+          <div class="field"><label class="fl" for="leadCo">Company</label><input type="text" id="leadCo" placeholder="Bank / BPO / cybersecurity firm…"></div>
+          <div class="field"><label class="fl" for="leadEmail">Work email</label><input type="email" id="leadEmail" placeholder="you@company.com"></div>
+          <div class="field"><label class="fl" for="leadType">What do you need?</label>
+            <select id="leadType">
+              <option>Enterprise deployment</option><option>API / white-label licence</option>
+              <option>Pilot / POC</option><option>Investment / partnership</option>
+            </select></div>
+          <button class="btn primary" onclick="VT.submitLead()">Send inquiry →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <b>VOXTRACE</b> · AI Trust Infrastructure for Voice &amp; Digital Evidence<br>
+      Detect. Explain. Verify. Preserve. — from hackathon build to cybersecurity startup.
+    </div>
+    <div class="footer-right">
+      <a href="#/verify">Console</a>
+      <a href="#/dashboard">Dashboard</a>
+      <a href="#/pricing">Pricing</a>
+      <a href="#/api">API</a>
+      <span>© 2026 VOXTRACE · demo build, data stays in your browser</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ USE-CASE MODALS ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" onclick="VT.closeModal()" aria-label="Close">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<noscript><div style="padding:20px;text-align:center;font-family:sans-serif">VOXTRACE needs JavaScript to run the verification console.</div></noscript>
+
+<script>
+/*SCRIPT*/
+</script>
+<script>
+/* Non-blocking font upgrade — falls back silently to system fonts when offline */
+(function(){try{
+  if(window.__voxFonts) return; window.__voxFonts = 1;
+  var l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Display:wght@400;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap";
+  document.head.appendChild(l);
+}catch(e){}})();
+</script>
+</body>
+</html>

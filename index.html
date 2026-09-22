@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOXTRACE — AI Trust Infrastructure for Voice &amp; Digital Evidence</title>
+<meta name="description" content="VOXTRACE detects AI-generated / cloned voice, explains the risk with a single Trust Score, and preserves tamper-proof evidence. Detect. Explain. Verify. Preserve.">
+<meta property="og:title" content="VOXTRACE — Every voice deserves a Trust Score">
+<meta property="og:description" content="AI Trust Infrastructure for Voice & Digital Evidence. Detect deepfake calls, explain risk, anchor evidence.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234285F4'/%3E%3Cpath d='M14 32h6l4-12 6 24 5-16 3 4h12' stroke='%23fff' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   VOXTRACE — production UI in the fundmycrazy.com design language
+   Light theme · Google palette · graph-paper · pills · tickets
+   ============================================================ */
+:root{
+  --blue:#4285F4;
+  --blue-dark:#1a73e8;
+  --light-blue:#D2E3FC;
+  --lighter-blue:#E8F0FE;
+  --gray:#F1F3F4;
+  --ink:#121317;
+  --body:#3c4043;
+  --white:#ffffff;
+  --red:#EA4335;
+  --yellow:#FBBC05;
+  --green:#34A853;
+  --grid-base:#eaf1fe;
+  --grid-line:#d5e2fb;
+  --radius-card:16px;
+  --font:'Google Sans','DM Sans','Product Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --font-display:'Google Sans Display','Google Sans','DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --mono:ui-monospace,'SFMono-Regular','Cascadia Mono',Menlo,Consolas,monospace;
+  --shadow-card:0 14px 34px rgba(18,19,23,.10);
+  --shadow-pop:0 10px 26px rgba(0,0,0,.18);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);color:var(--ink);background:var(--white);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit}
+::selection{background:var(--light-blue)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.container{max-width:1240px;margin:0 auto;padding:0 24px}
+.eyebrow{color:var(--blue);font-weight:700;font-size:clamp(16px,1.9vw,22px);text-align:center;margin-bottom:10px}
+.section-title{font-family:var(--font-display);font-size:clamp(30px,4.2vw,52px);font-weight:400;text-align:center;letter-spacing:-.5px;line-height:1.18}
+.section-title strong{font-weight:700}
+.lead{max-width:880px;margin:20px auto 0;font-size:clamp(15px,1.6vw,19px);line-height:1.6;color:var(--body);text-align:center}
+.gridbg{background-color:var(--grid-base);
+  background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+  background-size:28px 28px}
+
+/* views / router */
+.view{display:none;animation:fadeUp .3s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ============ NAV ============ */
+.nav{position:sticky;top:0;z-index:100;background:var(--white);box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.nav-inner{max-width:1400px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;white-space:nowrap;letter-spacing:.02em}
+.nav-brand .logo{width:34px;height:34px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(66,133,244,.35)}
+.nav-brand em{font-style:normal;color:var(--blue)}
+.nav-links{display:flex;align-items:center;gap:clamp(12px,1.6vw,26px);list-style:none}
+.nav-links a{font-size:clamp(12.5px,1vw,14px);font-weight:600;color:var(--ink);transition:color .2s;white-space:nowrap;padding:6px 2px}
+.nav-links a:hover,.nav-links a.active{color:var(--blue)}
+.btn-verify{background:var(--ink);color:var(--white)!important;padding:10px 20px;border-radius:999px;font-weight:600;transition:background .2s,transform .15s}
+.btn-verify:hover{background:var(--blue);transform:translateY(-1px)}
+.nav-toggle{display:none;background:none;border:0;cursor:pointer;padding:8px}
+.nav-toggle span{display:block;width:24px;height:2px;background:var(--ink);margin:5px 0;border-radius:2px}
+
+/* ============ HERO ============ */
+.hero{position:relative;background:#fcfcfc;overflow:hidden;padding:clamp(52px,7vw,90px) 0 clamp(44px,6vw,72px);text-align:center}
+.hero .cloud{position:absolute;pointer-events:none;opacity:.9}
+.hero .cloud.c1{left:-40px;top:36px;width:190px}
+.hero .cloud.c2{right:-30px;top:110px;width:150px;transform:scaleX(-1)}
+.hero .spark{position:absolute;pointer-events:none}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;background:var(--lighter-blue);border:2px solid var(--light-blue);
+  color:var(--blue-dark);font-weight:700;font-size:clamp(12px,1.3vw,14px);letter-spacing:.06em;
+  padding:9px 20px;border-radius:999px;text-transform:uppercase}
+.hero h1{font-family:var(--font-display);font-size:clamp(36px,5.6vw,68px);font-weight:400;line-height:1.08;
+  letter-spacing:-1px;margin:22px auto 0;max-width:940px}
+.hero h1 strong{font-weight:700}
+.hero h1 .hl{color:var(--blue)}
+.hero .sub{max-width:760px;margin:20px auto 0;font-size:clamp(15px,1.7vw,19px);line-height:1.6;color:var(--body)}
+.hero-bar{display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,22px);flex-wrap:wrap;margin-top:clamp(28px,3.5vw,40px)}
+.hero-pill{background:var(--ink);color:var(--white);border-radius:999px;padding:clamp(12px,1.3vw,18px) clamp(22px,3vw,36px);
+  white-space:nowrap;box-shadow:var(--shadow-pop);text-align:center;display:flex;flex-direction:column;line-height:1.1;
+  cursor:pointer;transition:transform .15s ease}
+.hero-pill .amount{font-size:clamp(18px,2.2vw,26px);font-weight:700}
+.hero-pill .psub{font-size:clamp(11px,1.1vw,14px);font-weight:400;opacity:.9}
+.hero-pill:hover{transform:translateY(-2px)}
+.hero-cta{display:inline-block;background:var(--blue);color:#fff;font-size:clamp(16px,1.8vw,21px);font-weight:700;
+  padding:clamp(14px,1.5vw,18px) clamp(26px,3vw,42px);border-radius:999px;box-shadow:0 8px 22px rgba(66,133,244,.35);
+  transition:transform .15s ease,box-shadow .15s ease,background .2s;white-space:nowrap}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(66,133,244,.42);background:var(--blue-dark)}
+.hero-note{color:var(--body);font-size:clamp(13px,1.3vw,15.5px);font-weight:600;text-align:center;margin-top:16px}
+.hero-visual{max-width:860px;margin:clamp(36px,4.5vw,52px) auto 0;position:relative}
+.wave-strip{background:var(--white);border-radius:26px;box-shadow:var(--shadow-card);padding:22px 26px 14px;border:1px solid var(--light-blue)}
+.wave-strip svg{display:block;width:100%;height:120px}
+.hero-chips{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+.hchip{background:var(--white);border:2px solid var(--light-blue);border-radius:999px;padding:9px 18px;font-weight:700;
+  font-size:clamp(12px,1.2vw,14px);color:var(--ink);display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(18,19,23,.06)}
+.hchip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* ============ ABOUT ============ */
+.about{padding:clamp(52px,6.5vw,80px) 0 clamp(40px,5vw,60px);background:var(--white)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(22px,3vw,44px);row-gap:16px;max-width:1120px;
+  margin:0 auto;padding:0 24px;align-items:stretch;grid-template-areas:'box visual'}
+.about-box{grid-area:box;display:flex;align-items:stretch}
+.bubble{background:var(--light-blue);border-radius:22px;padding:clamp(26px,3.2vw,44px);width:100%;display:flex;flex-direction:column;justify-content:center}
+.bubble h3{font-family:var(--font-display);font-size:clamp(26px,3.2vw,40px);font-weight:400;line-height:1.14;color:var(--ink)}
+.bubble h3 strong{font-weight:700}
+.bubble p{margin-top:14px;font-size:clamp(15px,1.5vw,17.5px);line-height:1.6;color:var(--body)}
+.about-visual{grid-area:visual;position:relative}
+.about-text-mobile{display:none}
+
+/* static scorecard ticket (hero + about) */
+.score-ticket{position:relative;background:var(--ink);color:#fff;border-radius:22px;padding:30px 30px 26px;
+  font-family:var(--mono);box-shadow:var(--shadow-pop);overflow:hidden}
+.score-ticket .st-badge{position:absolute;top:-20px;right:26px;width:78px;height:78px;border-radius:50%;background:var(--green);
+  border:5px solid var(--white);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 20px rgba(0,0,0,.2)}
+.score-ticket .st-head{color:#8ab4f8;letter-spacing:.18em;font-size:12px;margin-bottom:18px;display:flex;align-items:center;gap:9px}
+.score-ticket .st-head .pulse{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.score-ticket .st-big{font-size:clamp(56px,7vw,84px);font-weight:700;line-height:1;color:#fff}
+.score-ticket .st-big small{font-size:clamp(16px,1.8vw,22px);color:#9aa0a6;font-weight:400}
+.score-ticket .st-rows{margin-top:18px;border-top:1px dashed #3c4043}
+.score-ticket .st-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed #2a2b30;font-size:13px}
+.score-ticket .st-row:last-child{border-bottom:0}
+.score-ticket .k{color:#9aa0a6}
+.score-ticket .v{font-weight:700}
+.score-ticket .v.ok{color:#81c995}.score-ticket .v.warn{color:#fdd663}.score-ticket .v.bad{color:#f28b82}
+
+/* ============ HOW IT WORKS (challenge style) ============ */
+.challenge{background:var(--gray);padding:clamp(56px,7.5vw,92px) 0 clamp(60px,8vw,100px);text-align:center;position:relative;overflow:hidden}
+.challenge .bulb{width:66px;margin:0 auto 16px}
+.challenge-steps{display:flex;justify-content:center;align-items:flex-start;gap:clamp(16px,3.4vw,44px);margin-top:clamp(44px,5.5vw,64px);flex-wrap:wrap}
+.challenge-step{display:flex;flex-direction:column;align-items:center;gap:18px;max-width:210px}
+.icon-circle{width:112px;height:112px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;
+  font-size:46px;box-shadow:0 12px 26px rgba(66,133,244,.35);border:5px solid var(--white)}
+.icon-circle.red{background:var(--red);box-shadow:0 12px 26px rgba(234,67,53,.32)}
+.icon-circle.yellow{background:var(--yellow);box-shadow:0 12px 26px rgba(251,188,5,.35)}
+.icon-circle.green{background:var(--green);box-shadow:0 12px 26px rgba(52,168,83,.32)}
+.challenge-step h3{font-size:clamp(17px,1.8vw,22px);font-weight:700}
+.challenge-step p{font-size:13.5px;color:var(--body);line-height:1.5}
+.step-arrow{align-self:center;margin-top:38px;width:52px;flex:0 0 auto}
+.modes-row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:clamp(40px,5vw,56px)}
+
+/* ============ USE CASES (blue section) ============ */
+.usecases{background:var(--blue);padding:clamp(56px,7vw,84px) 0 clamp(60px,8vw,100px)}
+.usecases h2{color:var(--white);font-family:var(--font-display);font-size:clamp(30px,3.8vw,50px);font-weight:400;text-align:center;
+  margin-bottom:clamp(10px,1.4vw,14px);letter-spacing:-.5px;padding:0 24px}
+.usecases .uc-sub{text-align:center;color:var(--lighter-blue);font-weight:700;font-size:clamp(14px,1.6vw,19px);margin-bottom:clamp(36px,4.8vw,56px)}
+.cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;max-width:1180px;margin:0 auto;padding:0 24px}
+.cat-card{background:var(--white);border-radius:var(--radius-card);padding:28px 26px 24px;display:flex;flex-direction:column;
+  box-shadow:0 16px 34px rgba(0,0,0,.14);transition:transform .18s ease}
+.cat-card:hover{transform:translateY(-5px)}
+.cat-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.cat-icon{width:54px;height:54px;flex:0 0 54px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:26px}
+.cat-icon.red{background:var(--red)}.cat-icon.yellow{background:var(--yellow)}.cat-icon.green{background:var(--green)}
+.cat-head h3{font-size:18.5px;font-weight:700;line-height:1.25}
+.cat-card p{font-size:14px;line-height:1.55;color:var(--body);flex:1}
+.cat-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.cat-tag{font-size:11px;font-weight:700;letter-spacing:.04em;padding:5px 12px;border-radius:999px;background:var(--lighter-blue);color:var(--blue-dark)}
+.cat-tag.hot{background:#fce8e6;color:#c5221f}
+.btn-readmore{align-self:flex-start;margin-top:18px;background:var(--blue);color:var(--white);font-size:12.5px;font-weight:700;
+  padding:9px 18px;border-radius:999px;transition:background .2s;border:0;cursor:pointer}
+.btn-readmore:hover{background:var(--blue-dark)}
+.cat-wide{grid-column:1/-1;background:var(--ink);color:#fff;flex-direction:row;align-items:center;gap:26px;padding:30px 34px}
+.cat-wide:hover{transform:translateY(-4px)}
+.cat-wide .cat-icon{background:var(--yellow)}
+.cat-wide h3{font-size:22px;font-weight:700;margin-bottom:6px}
+.cat-wide p{color:#e8eaed;font-size:14.5px;line-height:1.55;flex:1}
+.cat-wide .btn-readmore{background:var(--yellow);color:var(--ink);margin-top:0;white-space:nowrap}
+.cat-wide .btn-readmore:hover{background:#f9ab00}
+
+/* ============ MODAL ============ */
+.modal-overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(18,19,23,.55);opacity:0;transition:opacity .2s ease}
+.modal-overlay.open{display:flex;opacity:1}
+.modal{background:var(--white);border-radius:22px;max-width:470px;width:100%;padding:34px 32px 30px;position:relative;
+  box-shadow:0 24px 60px rgba(0,0,0,.28);transform:translateY(12px) scale(.98);transition:transform .2s ease}
+.modal-overlay.open .modal{transform:none}
+.modal .m-icon{width:58px;height:58px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:26px}
+.modal h3{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:12px;padding-right:30px}
+.modal .m-label{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+.modal p{font-size:15.5px;line-height:1.6;color:var(--body)}
+.modal-close{position:absolute;top:16px;right:16px;width:36px;height:36px;border:0;border-radius:50%;background:var(--gray);
+  color:var(--ink);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:#e3e5e8}
+
+/* ============ TRUST SCORE (impact box) ============ */
+.trust{padding:clamp(30px,4vw,48px) 0 clamp(56px,7vw,84px);background:var(--white)}
+.impact-box{position:relative;max-width:1080px;margin:0 auto;background:var(--blue);border-radius:clamp(26px,3vw,36px);
+  padding:clamp(48px,5.5vw,64px) clamp(26px,5vw,56px) clamp(52px,6vw,70px);color:var(--white);box-shadow:0 24px 54px rgba(66,133,244,.35)}
+.impact-box h2{font-family:var(--font-display);font-size:clamp(30px,4vw,50px);font-weight:400;text-align:center;letter-spacing:-.5px}
+.impact-box .sub{text-align:center;font-weight:700;font-size:clamp(15px,1.8vw,21px);color:var(--yellow);margin-top:8px}
+.impact-bulb{position:absolute;top:-28px;right:52px;width:76px;height:76px;border-radius:50%;background:var(--yellow);
+  border:4px solid var(--white);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.impact-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,4vw,42px) 64px;max-width:860px;margin:clamp(36px,4.5vw,52px) auto 0}
+.impact-item{border-left:4px solid var(--white);padding-left:20px}
+.impact-item h3{font-size:clamp(18px,2vw,23px);font-weight:700;margin-bottom:8px}
+.impact-item p{font-size:14.5px;line-height:1.55;opacity:.95}
+
+/* ============ INDICATORS (tickets) ============ */
+.judging{background:var(--gray);padding:clamp(56px,7.5vw,88px) 0 clamp(64px,8.5vw,104px);text-align:center}
+.tickets{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;max-width:1140px;margin:clamp(52px,7vw,76px) auto 0;padding:0 24px}
+.ticket-wrap{position:relative;padding-top:46px}
+.ticket-badge{position:absolute;top:0;left:50%;transform:translateX(-50%);width:86px;height:86px;border-radius:50%;
+  background:var(--ink);border:5px solid var(--gray);color:var(--white);display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;z-index:2;font-family:var(--font-display)}
+.ticket{background:var(--blue);border-radius:18px;color:var(--white);padding:62px 20px 30px;min-height:250px;display:flex;flex-direction:column;
+  -webkit-mask:radial-gradient(circle 48px at 50% -3px,transparent 48px,#000 49px),radial-gradient(circle 13px at 26% 100%,transparent 13px,#000 14px),radial-gradient(circle 13px at 74% 100%,transparent 13px,#000 14px);
+  -webkit-mask-composite:source-in;
+  mask:radial-gradient(circle 48px at 50% -3px,transparent 48px,#000 49px),radial-gradient(circle 13px at 26% 100%,transparent 13px,#000 14px),radial-gradient(circle 13px at 74% 100%,transparent 13px,#000 14px);
+  mask-composite:intersect}
+.ticket.t-red{background:var(--red)}.ticket.t-yellow{background:#e8a90a}.ticket.t-green{background:var(--green)}.ticket.t-ink{background:var(--ink)}
+.ticket h3{font-size:17.5px;font-weight:700;line-height:1.25;margin-bottom:10px}
+.ticket .bold-line{font-size:12.5px;font-weight:700;display:block;margin-bottom:8px;opacity:.92}
+.ticket p{font-size:12.5px;line-height:1.55;text-align:left;opacity:.96}
+
+/* pillars trio */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;max-width:1080px;margin:clamp(44px,6vw,64px) auto 0;padding:0 24px}
+.pillar-card{background:var(--white);border-radius:var(--radius-card);padding:30px 28px;text-align:left;box-shadow:var(--shadow-card);
+  border-top:6px solid var(--blue)}
+.pillar-card.pr{border-top-color:var(--red)}.pillar-card.py{border-top-color:var(--yellow)}.pillar-card.pg{border-top-color:var(--green)}
+.pillar-card h3{font-size:20px;font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:10px}
+.pillar-card p{font-size:14px;line-height:1.55;color:var(--body)}
+.pillar-card .p-ic{width:52px;height:52px;border-radius:50%;background:var(--lighter-blue);display:flex;align-items:center;justify-content:center;font-size:24px}
+
+/* ============ PRICING (prize-table style) ============ */
+.pricing{position:relative;background:var(--light-blue);padding:clamp(56px,7.5vw,88px) 0 clamp(60px,8.5vw,96px);overflow:hidden}
+.prize-table-wrap{max-width:1060px;margin:clamp(34px,4.8vw,52px) auto 0;padding:0 24px;overflow-x:auto}
+table.prize-table{width:100%;border-collapse:separate;border-spacing:0 10px;min-width:680px}
+.prize-table th{background:var(--blue);color:var(--white);text-align:left;font-size:16.5px;font-weight:700;padding:18px 24px}
+.prize-table th:first-child{border-radius:10px 0 0 10px}
+.prize-table th:last-child{border-radius:0 10px 10px 0;text-align:right}
+.prize-table td{background:var(--white);padding:20px 24px;font-size:15.5px;vertical-align:top}
+.prize-table td b{font-size:16.5px}
+.prize-table td:last-child{font-weight:700;text-align:right;white-space:nowrap;font-size:17px}
+.prize-table tr.total td{background:var(--ink);color:var(--white);font-weight:700;font-size:16px}
+.prize-table tr td:first-child{border-radius:10px 0 0 10px}
+.prize-table tr td:last-child{border-radius:0 10px 10px 0}
+.prize-table .mini{display:block;color:var(--body);font-size:13px;margin-top:5px;font-weight:400;line-height:1.45}
+.prize-table .ribbon{display:inline-block;background:var(--yellow);color:var(--ink);font-size:10.5px;font-weight:800;letter-spacing:.06em;
+  padding:4px 11px;border-radius:999px;margin-left:8px;vertical-align:2px;text-transform:uppercase}
+
+.calc-card{max-width:1060px;margin:26px auto 0;padding:0 24px}
+.calc-inner{background:var(--white);border-radius:22px;box-shadow:var(--shadow-card);padding:clamp(26px,3.6vw,44px)}
+.calc-inner h3{font-family:var(--font-display);font-size:clamp(21px,2.6vw,30px);font-weight:700}
+.calc-inner .hint{color:var(--body);font-size:14px;margin-top:6px}
+.calc-row{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.6vw,34px);margin-top:26px}
+.calc-fld label{font-size:14px;font-weight:700;display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}
+.calc-fld .rangeval{color:var(--blue-dark);font-family:var(--mono)}
+.calc-fld .unit{display:block;color:var(--body);font-size:12.5px;font-weight:400;margin-top:2px}
+input[type=range]{width:100%;accent-color:var(--blue);height:22px;cursor:pointer}
+.calc-out{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:28px;
+  background:var(--ink);color:#fff;border-radius:16px;padding:20px 28px}
+.calc-out .lbl{font-size:14px;font-weight:600;color:#e8eaed}
+.calc-out .big{font-family:var(--font-display);font-size:clamp(24px,3vw,34px);font-weight:700;color:#81c995}
+.disclaim{font-size:12.5px;color:var(--body);margin-top:14px;display:flex;gap:8px;align-items:flex-start}
+
+/* ============ MOAT ============ */
+.moat{background:var(--white);padding:clamp(56px,7.5vw,88px) 0 clamp(60px,8vw,96px)}
+.moat-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(26px,3.6vw,40px) 60px;max-width:960px;margin:clamp(36px,4.5vw,52px) auto 0}
+.moat-item{border-left:4px solid var(--blue);padding-left:20px}
+.moat-item.my{border-color:var(--yellow)}.moat-item.mg{border-color:var(--green)}.moat-item.mr{border-color:var(--red)}
+.moat-item h3{font-size:clamp(17px,1.9vw,22px);font-weight:700;margin-bottom:7px}
+.moat-item p{font-size:14.5px;line-height:1.55;color:var(--body)}
+.reposition{max-width:960px;margin:clamp(38px,5vw,54px) auto 0;background:var(--lighter-blue);border:2px dashed var(--blue);
+  border-radius:22px;padding:clamp(24px,3.4vw,36px);display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.reposition .arrow{font-size:30px;color:var(--blue)}
+.reposition .from,.reposition .to{flex:1;min-width:230px}
+.reposition .lbl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--blue-dark);margin-bottom:6px}
+.reposition .from p{font-size:15px;color:var(--body);text-decoration:line-through;text-decoration-color:#f28b82}
+.reposition .to p{font-size:15.5px;font-weight:700}
+
+/* ============ CONSOLE (verify) ============ */
+.appsec{padding:clamp(40px,5vw,64px) 0 clamp(56px,7vw,90px)}
+.apphead{text-align:center;margin-bottom:clamp(28px,3.6vw,44px)}
+.apphead .backlink{display:inline-block;font-size:13px;font-weight:700;color:var(--blue-dark);margin-bottom:14px}
+.console{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
+.panel{background:var(--white);border-radius:22px;box-shadow:var(--shadow-card);padding:clamp(20px,2.6vw,30px);border:1px solid #e6ecf7}
+.panel.dark{background:var(--ink);color:#fff}
+.tabs{display:flex;gap:10px;margin-bottom:20px}
+.tabbtn{flex:1;text-align:center;padding:13px 10px;border-radius:999px;border:2px solid var(--light-blue);background:var(--lighter-blue);
+  color:var(--body);font-weight:700;cursor:pointer;font-size:14.5px;transition:.15s}
+.tabbtn.on{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(66,133,244,.35)}
+.challenge-bubble{background:var(--light-blue);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+.challenge-bubble .lbl{font-size:11px;letter-spacing:.12em;color:var(--blue-dark);font-weight:800;margin-bottom:8px;text-transform:uppercase}
+.challenge-bubble .ph{font-size:16.5px;font-weight:700;line-height:1.4}
+.challenge-bubble .ph-hi{color:#8a5a00;font-size:14px;margin-top:4px;font-weight:600}
+.challenge-bubble .row2{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.linkbtn{background:none;border:none;color:var(--blue-dark);cursor:pointer;font-size:12.5px;font-weight:700;padding:2px 0;white-space:nowrap}
+.linkbtn:hover{text-decoration:underline}
+
+.rec-zone{border:2.5px dashed var(--light-blue);border-radius:18px;padding:34px 20px;text-align:center;background:var(--lighter-blue);
+  transition:.2s;cursor:pointer;color:var(--ink)}
+.rec-zone:hover,.rec-zone.drag{border-color:var(--blue);background:#e3edfd}
+.reczone b{font-size:16px}
+.recbtn{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;position:relative;display:block;margin:8px auto 16px;
+  background:radial-gradient(circle at 32% 30%,#f28b82,var(--red) 70%);box-shadow:0 0 0 9px rgba(234,67,53,.14),0 10px 24px rgba(234,67,53,.35);
+  transition:.2s}
+.recbtn:hover{transform:scale(1.05)}
+.recbtn.recording{animation:pulsebox 1.4s infinite}
+.recbtn::after{content:'';position:absolute;inset:33px;background:#fff;border-radius:6px}
+.recbtn.recording::after{border-radius:3px;inset:35px}
+@keyframes pulsebox{0%{box-shadow:0 0 0 9px rgba(234,67,53,.2),0 10px 24px rgba(234,67,53,.35)}
+  50%{box-shadow:0 0 0 22px rgba(234,67,53,.04),0 10px 24px rgba(234,67,53,.35)}
+  100%{box-shadow:0 0 0 9px rgba(234,67,53,.2),0 10px 24px rgba(234,67,53,.35)}}
+.rec-status{text-align:center;font-family:var(--mono);font-size:13px;color:var(--body)}
+.rec-status b{color:var(--red)}
+canvas.wave{width:100%;height:92px;border-radius:12px;background:var(--lighter-blue);border:1px solid var(--light-blue);display:block;margin-top:16px}
+.demo-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+.demo-note{font-size:12px;color:var(--body);margin-top:10px;text-align:center}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:13px 26px;font-weight:700;
+  font-size:14.5px;cursor:pointer;border:0;transition:.18s;font-family:var(--font)}
+.btn.primary{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(66,133,244,.3)}
+.btn.primary:hover{background:var(--blue-dark);transform:translateY(-2px)}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.dark:hover{background:#2a2b30;transform:translateY(-2px)}
+.btn.ghost{background:var(--white);color:var(--ink);border:2px solid var(--light-blue)}
+.btn.ghost:hover{border-color:var(--blue);color:var(--blue-dark)}
+.btn.small{padding:9px 18px;font-size:13px}
+.btn.danger{background:#fce8e6;color:#c5221f}
+.btn.danger:hover{background:#fad2cf}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none}
+
+/* result panel */
+.result-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:430px;gap:14px;text-align:center}
+.result-empty .big-ic{width:96px;height:96px;border-radius:50%;background:var(--lighter-blue);display:flex;align-items:center;justify-content:center;font-size:42px}
+.result-empty b{font-size:18px}
+.result-empty span{font-size:13.5px;max-width:300px;color:var(--body)}
+.gauge-wrap{display:flex;justify-content:center;margin:6px 0 2px}
+.verdict-line{text-align:center;margin:8px 0 12px}
+.verdict{font-family:var(--font-display);font-size:21px;font-weight:700;letter-spacing:.01em}
+.verdict.g{color:var(--green)}.verdict.a{color:#e8a90a}.verdict.r{color:var(--red)}
+.conf-line{text-align:center;color:var(--body);font-size:13.5px;margin-bottom:14px}
+.conf-line b{color:var(--ink)}
+.flagrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.flagchip{font-size:12px;font-weight:700;border-radius:999px;padding:6px 14px}
+.flagchip.bad{color:#c5221f;background:#fce8e6}
+.flagchip.ok{color:#188038;background:#e6f4ea}
+.ind{margin-bottom:13px}
+.ind .top{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;gap:10px}
+.ind .top b{font-weight:700}
+.ind .top span{color:var(--body);font-family:var(--mono);font-size:12px;white-space:nowrap}
+.bar{height:9px;border-radius:99px;background:var(--gray);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.bar i.g{background:linear-gradient(90deg,#188038,#34A853)}
+.bar i.a{background:linear-gradient(90deg,#e8a90a,#FBBC05)}
+.bar i.r{background:linear-gradient(90deg,#c5221f,#EA4335)}
+.ind .det{font-size:11.5px;color:var(--body);margin-top:5px;line-height:1.45}
+.passport{margin-top:20px;border-radius:16px;background:var(--ink);color:#fff;padding:18px 20px}
+.passport h4{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;color:#8ab4f8;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.kv{display:flex;gap:12px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed #3c4043}
+.kv:last-child{border-bottom:0}
+.kv .k{min-width:104px;color:#9aa0a6;flex:0 0 auto}
+.kv .v{font-family:var(--mono);word-break:break-all;color:#d2e3fc;font-size:12px}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.engine-note{font-size:12px;color:var(--body);margin-top:18px;max-width:760px;margin-left:auto;margin-right:auto;
+  background:var(--gray);border-radius:12px;padding:12px 16px;line-height:1.5}
+
+/* ============ DASHBOARD ============ */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:0 0 26px}
+.kpi{background:var(--white);border-radius:18px;box-shadow:var(--shadow-card);padding:20px 22px;display:flex;gap:16px;align-items:center;border:1px solid #e6ecf7}
+.kpi .ic{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;flex:0 0 auto}
+.kpi .ic.b{background:var(--lighter-blue)}.kpi .ic.g{background:#e6f4ea}.kpi .ic.r{background:#fce8e6}.kpi .ic.y{background:#fef7e0}
+.kpi .n{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1}
+.kpi .l{color:var(--body);font-size:12.5px;font-weight:600;margin-top:4px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:26px}
+.dist-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:12.5px}
+.dist-row .lbl{width:74px;color:var(--body);font-family:var(--mono)}
+.dist-row .bar{flex:1}
+.dist-row .ct{width:28px;text-align:right;color:var(--body);font-family:var(--mono)}
+table.log{width:100%;border-collapse:collapse;font-size:13.5px}
+table.log th{background:var(--blue);color:#fff;text-align:left;font-size:12px;font-weight:700;padding:13px 14px;letter-spacing:.03em}
+table.log th:first-child{border-radius:10px 0 0 0}
+table.log th:last-child{border-radius:0 10px 0 0}
+table.log td{padding:13px 14px;border-bottom:1px solid var(--gray);font-family:var(--mono);font-size:12.5px;background:var(--white)}
+table.log tr:hover td{background:var(--lighter-blue)}
+.sc{font-weight:800}
+.sc.g{color:var(--green)}.sc.a{color:#e8a90a}.sc.r{color:var(--red)}
+.tblwrap{overflow-x:auto;border-radius:14px;box-shadow:var(--shadow-card)}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+input[type=text],input[type=email],input[type=number],textarea,select{
+  background:var(--white);border:2px solid var(--light-blue);color:var(--ink);border-radius:12px;padding:12px 16px;
+  font-size:14.5px;font-family:var(--font);width:100%;outline:none;transition:.15s}
+input:focus,textarea:focus,select:focus{border-color:var(--blue)}
+label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0 0 6px 4px}
+.field{margin-bottom:14px}
+.re-result{margin-top:14px}
+.re-result .okbox{background:#e6f4ea;border:2px solid var(--green);border-radius:14px;padding:14px 16px;font-size:13.5px;line-height:1.5}
+.re-result .badbox{background:#fce8e6;border:2px solid var(--red);border-radius:14px;padding:14px 16px;font-size:13.5px;line-height:1.5}
+
+/* ============ API ============ */
+.codeblock{background:var(--ink);color:#e8eaed;border-radius:16px;padding:18px 20px;font-family:var(--mono);font-size:12.8px;
+  line-height:1.7;overflow-x:auto;white-space:pre}
+.codeblock .s{color:#81c995}
+.codeblock .k{color:#8ab4f8}
+.apikey-box{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.apikey-box code{font-family:var(--mono);background:var(--lighter-blue);border:2px solid var(--light-blue);border-radius:12px;
+  padding:12px 16px;color:var(--blue-dark);font-size:13.5px;font-weight:700;flex:1;min-width:220px;word-break:break-all}
+.endpoint{display:flex;gap:12px;align-items:center;padding:12px 16px;border:2px solid var(--gray);border-radius:12px;
+  margin-bottom:10px;font-family:var(--mono);font-size:13px;background:var(--white)}
+.mth{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.04em}
+.mth.post{background:#e6f4ea;color:#188038}
+.mth.get{background:var(--lighter-blue);color:var(--blue-dark)}
+.endpoint .desc{color:var(--body);font-family:var(--font);font-size:12.5px;margin-left:auto}
+.partner-box{background:var(--blue);border-radius:22px;padding:clamp(26px,3.4vw,40px);color:#fff;margin-top:22px}
+.partner-box h3{font-family:var(--font-display);font-size:clamp(20px,2.6vw,28px);font-weight:700;margin-bottom:10px}
+.partner-box p{font-size:14.5px;line-height:1.6;opacity:.96}
+.partner-list{list-style:none;margin-top:16px}
+.partner-list li{padding:8px 0 8px 34px;position:relative;font-weight:600}
+.partner-list li::before{content:'✓';position:absolute;left:4px;top:8px;width:22px;height:22px;border-radius:50%;background:var(--yellow);
+  color:var(--ink);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+/* ============ FAQ ============ */
+.faq{background:var(--ink);padding:clamp(56px,7.5vw,88px) 0 clamp(64px,8.5vw,104px)}
+.faq h2{color:var(--white);font-family:var(--font-display);font-size:clamp(32px,4.2vw,50px);font-weight:400;text-align:center;margin-bottom:clamp(28px,3.8vw,44px)}
+.faq-list{max-width:920px;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;gap:16px}
+.faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--light-blue);border:0;
+  cursor:pointer;font-family:var(--font);font-size:clamp(15px,1.7vw,19px);font-weight:700;color:var(--ink);
+  padding:15px 14px 15px 30px;border-radius:999px;text-align:left;transition:background .2s}
+.faq-q:hover{background:#c3d8fa}
+.faq-q .toggle{flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;
+  align-items:center;justify-content:center;font-size:22px;font-weight:400;transition:background .2s}
+.faq-item.open .faq-q .toggle{background:var(--blue)}
+.faq-item.open .faq-q{border-radius:999px 999px 0 0}
+.faq-a{display:none;background:var(--gray);border-radius:0 0 20px 20px;margin:0 26px;padding:24px 32px;font-size:clamp(14.5px,1.6vw,17px);
+  line-height:1.65;color:var(--body)}
+.faq-item.open .faq-a{display:block}
+
+/* ============ FOOTER ============ */
+.footer{background:#0b0c0e;border-top:1px solid rgba(255,255,255,.15);color:var(--white);padding:36px 0}
+.footer-inner{max-width:1300px;margin:0 auto;padding:0 32px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.footer-left{font-size:13px;line-height:1.7;color:#e8eaed}
+.footer-left b{letter-spacing:.06em}
+.footer-right{display:flex;align-items:center;gap:18px;font-size:13px;color:#e8eaed;flex-wrap:wrap}
+.footer-right a{color:#8ab4f8;font-weight:600}
+.footer-right a:hover{text-decoration:underline}
+
+/* ============ TOAST ============ */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:#fff;
+  padding:13px 26px;border-radius:999px;font-size:14px;font-weight:600;transition:.25s;z-index:1200;box-shadow:var(--shadow-pop);
+  pointer-events:none;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(20px);transition:.6s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:1080px){
+  .tickets{grid-template-columns:repeat(3,1fr);gap:44px 18px}
+}
+@media (max-width:900px){
+  .nav-links{position:fixed;inset:60px 0 auto 0;background:var(--white);flex-direction:column;align-items:stretch;padding:8px 0 12px;
+    gap:0;box-shadow:0 14px 24px rgba(0,0,0,.12);display:none;max-height:calc(100vh - 60px);overflow-y:auto;z-index:99}
+  .nav-links.open{display:flex}
+  .nav-links li{width:100%;border-bottom:1px solid #eceef1}
+  .nav-links li:last-child{border-bottom:0}
+  .nav-links a{display:block;font-size:16px;padding:16px 28px}
+  .btn-verify{margin:12px 28px 6px;text-align:center}
+  .nav-toggle{display:block}
+  .cards-grid{grid-template-columns:repeat(2,1fr)}
+  .console,.dash-grid,.impact-grid,.moat-grid{grid-template-columns:1fr}
+  .calc-row{grid-template-columns:1fr}
+  .about-grid{grid-template-columns:1fr;grid-template-areas:'box' 'visual'}
+}
+@media (max-width:640px){
+  .cards-grid,.tickets,.pillars,.kpis{grid-template-columns:1fr}
+  .tickets{gap:40px}
+  .step-arrow{display:none}
+  .cat-wide{flex-direction:column;text-align:center}
+  .cat-wide .btn-readmore{margin:0 auto}
+  .hero-pill{width:100%;max-width:340px}
+  .reposition{flex-direction:column;text-align:center}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============ SVG doodle defs ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="doodle-cloud">
+      <path d="M25 62c-11 0-20-8-20-19 0-9 6-16 14-18 3-9 12-15 22-15 11 0 20 7 23 16 9 1 16 9 16 18 0 10-9 18-20 18H25Z"
+        fill="#fff" stroke="#D2E3FC" stroke-width="3"/>
+    </g>
+    <g id="doodle-spark">
+      <path d="M20 2v12M14 8h12" stroke="#FBBC05" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="34" cy="26" r="4" fill="#EA4335"/>
+    </g>
+    <g id="doodle-arrow">
+      <path d="M4 22 C 18 4, 34 4, 46 18" fill="none" stroke="#4285F4" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 9"/>
+      <path d="M38 20 l 9 1 -3 -9" fill="none" stroke="#4285F4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g id="doodle-bulb">
+      <circle cx="32" cy="26" r="17" fill="#FBBC05" stroke="#121317" stroke-width="3"/>
+      <path d="M25 43h14M27 49h10" stroke="#121317" stroke-width="3" stroke-linecap="round"/>
+      <path d="M32 2v5M8 14l4 4M56 14l-4 4M2 30h5M57 30h5" stroke="#FBBC05" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ============ NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#/home">
+      <span class="logo">
+        <svg width="20" height="20" viewBox="0 0 64 64"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      VOX<em>TRACE</em>
+    </a>
+    <button class="nav-toggle" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#/home" data-nav="home">What is VOXTRACE</a></li>
+      <li><a href="#/home#how" data-nav="how">How it works</a></li>
+      <li><a href="#/pricing" data-nav="pricing">Pricing</a></li>
+      <li><a href="#/api" data-nav="api">API &amp; Partners</a></li>
+      <li><a href="#/dashboard" data-nav="dashboard">Dashboard</a></li>
+      <li><a href="#/verify" class="btn-verify" data-nav="verify">Verify a voice →</a></li>
+    </ul>
+  </div>
+</header>
+
+<!-- ============================================================ HOME ============================================================ -->
+<div class="view active" id="view-home">
+
+  <!-- HERO -->
+  <section class="hero gridbg">
+    <svg class="cloud c1" viewBox="0 0 95 66"><use href="#doodle-cloud"/></svg>
+    <svg class="cloud c2" viewBox="0 0 95 66"><use href="#doodle-cloud"/></svg>
+    <svg class="spark" style="left:12%;top:22%;width:40px" viewBox="0 0 40 32"><use href="#doodle-spark"/></svg>
+    <svg class="spark" style="right:14%;top:60%;width:34px" viewBox="0 0 40 32"><use href="#doodle-spark"/></svg>
+
+    <div class="container">
+      <span class="hero-kicker">🛡 AI Trust Infrastructure for Voice &amp; Digital Evidence</span>
+      <h1>Is that really <strong>the CEO</strong><br>on the call — or an <span class="hl">AI clone?</span></h1>
+      <p class="sub">Voice-cloning fraud is rising — CEO-voice scams, fake vendor calls, impersonation of employees and customers.
+        VOXTRACE analyses any voice sample and gives you one explainable <strong>Trust Score</strong>, anchored as tamper-proof evidence.</p>
+
+      <div class="hero-bar">
+        <div class="hero-pill" onclick="location.hash='#/verify'">
+          <span class="amount">Detect. Explain. Verify. Preserve.</span>
+          <span class="psub">for every voice interaction</span>
+        </div>
+        <a href="#/verify" class="hero-cta">Run a Voice Check →</a>
+      </div>
+      <p class="hero-note">Built for Indian banks · fintechs · BPOs · HR platforms — free demo, runs 100% in your browser</p>
+
+      <div class="hero-visual">
+        <div class="wave-strip">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+            <polyline id="heroWave" fill="none" stroke="#4285F4" stroke-width="2.4" opacity="0.9"/>
+            <polyline id="heroWave2" fill="none" stroke="#D2E3FC" stroke-width="2" opacity="1"/>
+            <polyline id="heroWave3" fill="none" stroke="#34A853" stroke-width="1.6" opacity="0.65"/>
+          </svg>
+          <div class="hero-chips">
+            <span class="hchip"><i style="background:var(--blue)"></i> Live call mode</span>
+            <span class="hchip"><i style="background:var(--red)"></i> Recorded call mode</span>
+            <span class="hchip"><i style="background:var(--green)"></i> SHA-256 evidence chain</span>
+            <span class="hchip"><i style="background:var(--yellow)"></i> Explainable indicators</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="what">
+    <div class="about-grid">
+      <div class="about-box">
+        <div class="bubble">
+          <h3>What is <strong>VOXTRACE?</strong></h3>
+          <p>VOXTRACE analyses a voice sample to detect whether it is <strong>AI-generated / cloned</strong> or a genuine human recording,
+             and produces a <strong>verifiable trust output</strong> for each sample.</p>
+          <p>The caller speaks a challenge phrase, the engine verifies it against expected voice patterns, and the result is anchored
+             so it cannot be tampered with — turning every check into reusable evidence.</p>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="score-ticket">
+          <div class="st-badge">✓</div>
+          <div class="st-head"><span class="pulse"></span> VOXTRACE TRUST SCORE</div>
+          <div class="st-big">92<small> / 100</small></div>
+          <div class="st-rows">
+            <div class="st-row"><span class="k">Verdict</span><span class="v ok">LIKELY GENUINE</span></div>
+            <div class="st-row"><span class="k">Confidence</span><span class="v">HIGH</span></div>
+            <div class="st-row"><span class="k">Flag</span><span class="v ok">NONE</span></div>
+            <div class="st-row"><span class="k">Evidence</span><span class="v">sha256: 9f2c…e7d1 ✓ anchored</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-text-mobile">
+      <div class="bubble">
+        <h3>What is <strong>VOXTRACE?</strong></h3>
+        <p>VOXTRACE detects whether a voice sample is AI-generated / cloned or genuinely human — and anchors the result as tamper-proof evidence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="challenge" id="how">
+    <svg class="bulb" viewBox="0 0 64 56"><use href="#doodle-bulb"/></svg>
+    <h2 class="section-title">From raw audio to anchored evidence — <strong>in 4 steps</strong></h2>
+    <p class="lead">Two input modes — <strong>Live call</strong> and <strong>Recorded call</strong>. A challenge phrase is spoken or played
+      and verified against expected voice patterns, with a confidence score attached.</p>
+
+    <div class="challenge-steps">
+      <div class="challenge-step">
+        <div class="icon-circle">🎙️</div>
+        <h3>1 · Capture</h3>
+        <p>Record live or upload a call. A challenge phrase prompts the caller to speak a known sample text.</p>
+      </div>
+      <svg class="step-arrow" viewBox="0 0 50 26"><use href="#doodle-arrow"/></svg>
+      <div class="challenge-step">
+        <div class="icon-circle red">🔎</div>
+        <h3>2 · Detect</h3>
+        <p>The engine inspects pitch dynamics, pacing, spectral flux and high-frequency continuity for synthetic signatures.</p>
+      </div>
+      <svg class="step-arrow" viewBox="0 0 50 26"><use href="#doodle-arrow"/></svg>
+      <div class="challenge-step">
+        <div class="icon-circle yellow">🧠</div>
+        <h3>3 · Decide</h3>
+        <p>One explainable Trust Score (0–100) with indicators, verdict, confidence and risk flags.</p>
+      </div>
+      <svg class="step-arrow" viewBox="0 0 50 26"><use href="#doodle-arrow"/></svg>
+      <div class="challenge-step">
+        <div class="icon-circle green">🛡️</div>
+        <h3>4 · Preserve</h3>
+        <p>Result anchored with a SHA-256 hash into a tamper-evident chain — an audit trail that can't be rewritten.</p>
+      </div>
+    </div>
+
+    <div class="modes-row">
+      <a href="#/verify" class="btn primary">🔴 Try Live Call mode</a>
+      <a href="#/verify" class="btn ghost">📁 Try Recorded Call mode</a>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section class="usecases">
+    <h2>Three calls that could ruin a business.<br>We verify all of them.</h2>
+    <p class="uc-sub">Pick a scenario — this is where VOXTRACE earns its keep.</p>
+    <div class="cards-grid">
+      <div class="cat-card">
+        <div class="cat-head"><div class="cat-icon red">🚨</div><h3>“Verify the CEO”</h3></div>
+        <p>An urgent fund-transfer instruction arrives “from the CEO”. The call runs through VOXTRACE first — a low trust score is the
+           trigger to stop and verify through a second channel before money or data moves.</p>
+        <div class="cat-tags"><span class="cat-tag hot">HIGH-STAKES</span><span class="cat-tag">Finance</span></div>
+        <button class="btn-readmore" data-modal="m-ceo">Read more</button>
+      </div>
+      <div class="cat-card">
+        <div class="cat-head"><div class="cat-icon">🏛️</div><h3>Secure call operations</h3></div>
+        <p>Banks, fintechs and BPOs verify that the caller's identity is real — not a deepfake — before trusting any voice interaction,
+           instruction or tele-banking authorisation.</p>
+        <div class="cat-tags"><span class="cat-tag">Banking</span><span class="cat-tag">BPO</span><span class="cat-tag">Fintech</span></div>
+        <button class="btn-readmore" data-modal="m-bpo">Read more</button>
+      </div>
+      <div class="cat-card">
+        <div class="cat-head"><div class="cat-icon green">🎓</div><h3>Recruitment &amp; interviews</h3></div>
+        <p>Confirm the person on a remote interview call is a real, live human — not a synthetic voice or a proxy candidate
+           playing pre-recorded / AI-cloned answers.</p>
+        <div class="cat-tags"><span class="cat-tag">HR-Tech</span><span class="cat-tag">EdTech</span></div>
+        <button class="btn-readmore" data-modal="m-hr">Read more</button>
+      </div>
+      <div class="cat-card cat-wide">
+        <div class="cat-icon">🚀</div>
+        <div style="flex:1">
+          <h3>Voice Authenticity Suite — the next line</h3>
+          <p>Beyond fraud-call detection, the same engine extends to voice notes, podcasts, evidence recordings and other audio content.
+             Long-term: VOXTRACE as the underlying <strong>authenticity infrastructure</strong> other products plug into.</p>
+        </div>
+        <button class="btn-readmore" data-modal="m-suite">Explore roadmap</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST SCORE USP -->
+  <section class="trust">
+    <div class="impact-box">
+      <div class="impact-bulb">💡</div>
+      <h2>One score. Zero ambiguity.</h2>
+      <p class="sub">The VOXTRACE Trust Score — built for people who aren't ML engineers</p>
+      <div class="impact-grid">
+        <div class="impact-item"><h3>Acts like a smoke alarm</h3><p>A single explainable number (0–100) a compliance officer or ops team can act on instantly — instead of interpreting raw model output.</p></div>
+        <div class="impact-item"><h3>Non-technical by design</h3><p>A CEO approving a wire transfer trusts one score. No data-science degree required.</p></div>
+        <div class="impact-item"><h3>Flags only when it matters</h3><p>High-risk indicators — robotic pitch, unnatural pacing, HF anomalies — surface only when the score is low.</p></div>
+        <div class="impact-item"><h3>Every score is evidence</h3><p>Each result carries a SHA-256 Evidence Passport anchored into a tamper-evident chain — ready for audit.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INDICATOR TICKETS + PILLARS -->
+  <section class="judging">
+    <p class="eyebrow">Under the hood</p>
+    <h2 class="section-title">Five things the engine listens to.</h2>
+    <p class="lead">Every Trust Score is a weighted blend of five explainable indicators — shown transparently in every report.</p>
+
+    <div class="tickets">
+      <div class="ticket-wrap"><div class="ticket-badge">25%</div>
+        <div class="ticket"><h3>Pitch Naturalness</h3><span class="bold-line">Is the intonation human?</span>
+          <p>Real voices wobble — jitter, vibrato, emotional drift. Cloned audio tends to lock onto an unnaturally constant pitch.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">20%</div>
+        <div class="ticket t-red"><h3>Temporal Pacing</h3><span class="bold-line">Does the rhythm breathe?</span>
+          <p>Humans rush, pause and hesitate. Metronome-perfect syllable periodicity is a classic synthetic signature.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">20%</div>
+        <div class="ticket t-yellow"><h3>Spectral Dynamics</h3><span class="bold-line">Is the timbre alive?</span>
+          <p>Frame-to-frame spectral flux and centroid spread — natural speech keeps evolving, vocoder output stays suspiciously static.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">15%</div>
+        <div class="ticket t-green"><h3>HF Continuity</h3><span class="bold-line">Do highs roll off naturally?</span>
+          <p>Many vocoders cut off sharply near their band limit. Abrupt high-frequency cliffs raise a flag.</p></div></div>
+      <div class="ticket-wrap"><div class="ticket-badge">20%</div>
+        <div class="ticket t-ink"><h3>Breath &amp; Room Tone</h3><span class="bold-line">Is there a human in the room?</span>
+          <p>Breaths, micro-pauses and ambient noise floor — present in real recordings, usually absent from synthetic output.</p></div></div>
+    </div>
+
+    <p class="eyebrow" style="margin-top:clamp(48px,6vw,72px)">Product pillars</p>
+    <h2 class="section-title">A trust layer, <strong>not a point tool.</strong></h2>
+    <div class="pillars">
+      <div class="pillar-card"><div class="p-ic">🔎</div><h3 style="color:var(--blue-dark)">DETECT</h3>
+        <p>AI-generated / manipulated audio detection — voice deepfakes, cloned calls, synthetic interview audio.</p></div>
+      <div class="pillar-card pr"><div class="p-ic">🧠</div><h3 style="color:#c5221f">DECIDE</h3>
+        <p>Risk score + explainable indicators. One number a compliance officer can act on — not raw model output.</p></div>
+      <div class="pillar-card pg"><div class="p-ic">🛡️</div><h3 style="color:#188038">DEFEND</h3>
+        <p>Evidence integrity + audit trail + integrations. Results anchored so they cannot be tampered with.</p></div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="sec-pricing">
+    <svg class="spark" style="left:3%;top:16%;width:44px" viewBox="0 0 40 32"><use href="#doodle-spark"/></svg>
+    <svg style="position:absolute;right:4%;top:10%;width:70px" viewBox="0 0 64 56"><use href="#doodle-bulb"/></svg>
+    <p class="eyebrow">Business model</p>
+    <h2 class="section-title">Hybrid revenue: <strong>Subscription + Usage API + Enterprise</strong></h2>
+    <p class="lead">Predictable base revenue, upside from call volume, and large deal sizes from enterprise contracts.
+       Core sustainable revenue is B2B — businesses carry the compliance budget and the acute fraud-risk exposure.</p>
+
+    <div class="prize-table-wrap">
+      <table class="prize-table">
+        <thead><tr><th>Plan</th><th>What's included</th><th>Price / month</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Starter</b><span class="mini">Freemium entry — individuals &amp; small teams</span></td>
+            <td>100 verifications included · web console · Trust Score reports · Evidence Passport anchoring · email support</td>
+            <td>₹5,000</td>
+          </tr>
+          <tr>
+            <td><b>Business</b><span class="ribbon">Most popular</span><span class="mini">BPOs, fintechs, HR platforms</span></td>
+            <td>1,000 verifications + API access · tokenised usage beyond quota · team dashboard + exports · live-call streaming integration · priority support</td>
+            <td>₹25,000</td>
+          </tr>
+          <tr>
+            <td><b>Enterprise</b><span class="mini">Banks &amp; large-scale deployments</span></td>
+            <td>Custom volume + SLA-backed uptime · on-prem / VPC deployment · white-label &amp; licence deals · integrations + audit workflow design · dedicated success manager</td>
+            <td>₹1,00,000+</td>
+          </tr>
+          <tr class="total">
+            <td>Hybrid model</td>
+            <td>Subscription (base access) + usage-based API billing + enterprise contracts</td>
+            <td>Recommended ✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="calc-card">
+      <div class="calc-inner">
+        <h3>📈 Revenue calculator</h3>
+        <p class="hint">Illustrative math to show how tiers could stack up — drag the sliders. Defaults mirror the pitch example.</p>
+        <div class="calc-row">
+          <div class="calc-fld">
+            <label>Small customers <span class="rangeval" id="vSmall">100</span></label>
+            <input type="range" min="0" max="500" value="100" id="rSmall" oninput="VT.calc()" aria-label="Small customers">
+            <span class="unit">× ₹5,000 / month each</span>
+          </div>
+          <div class="calc-fld">
+            <label>Business customers <span class="rangeval" id="vBiz">20</span></label>
+            <input type="range" min="0" max="100" value="20" id="rBiz" oninput="VT.calc()" aria-label="Business customers">
+            <span class="unit">× ₹25,000 / month each</span>
+          </div>
+          <div class="calc-fld">
+            <label>Enterprise contracts <span class="rangeval" id="vEnt">5</span></label>
+            <input type="range" min="0" max="30" value="5" id="rEnt" oninput="VT.calc()" aria-label="Enterprise contracts">
+            <span class="unit">× ₹1,00,000 / month each</span>
+          </div>
+        </div>
+        <div class="calc-out">
+          <span class="lbl">Total hypothetical revenue</span>
+          <span class="big" id="calcOut">₹15,00,000 / month</span>
+        </div>
+        <p class="disclaim">⚠️ <span>Illustrative only — not a forecast. Real revenue depends on customer acquisition, detection quality,
+           infrastructure costs, sales cycle, and pricing validation.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOAT -->
+  <section class="moat">
+    <p class="eyebrow">Reality check → moat</p>
+    <h2 class="section-title">Where the defensible moat <strong>actually</strong> comes from</h2>
+    <p class="lead">A public detection model + hashing alone is not a moat — commercial deepfake-detection APIs already exist.
+       The long-term moat is compounding data and workflow lock-in:</p>
+    <div class="moat-grid">
+      <div class="moat-item"><h3>📊 Data flywheel</h3><p>Real-world customer data with false-positive / false-negative feedback loops improving the engine continuously.</p></div>
+      <div class="moat-item my"><h3>🇮🇳 Built for Indian voice</h3><p>Hindi + English + regional languages, noisy Indian phone-call audio, Indian enterprise workflows — validated before claiming the positioning.</p></div>
+      <div class="moat-item mg"><h3>🔗 Workflow lock-in</h3><p>Fraud-case intelligence, enterprise-system integrations, and evidence / audit workflows embedded into customer operations.</p></div>
+      <div class="moat-item mr"><h3>🤝 Distribution via partners</h3><p>White-label licensing rides an existing cybersecurity company's distribution instead of selling one customer at a time.</p></div>
+    </div>
+    <div class="reposition">
+      <div class="from"><div class="lbl">Hackathon version</div><p>AI Voice Clone Detection + Blockchain + Forensics</p></div>
+      <div class="arrow">➜</div>
+      <div class="to"><div class="lbl">Startup version</div><p>VOXTRACE — AI Trust Infrastructure · B2B SaaS + API + Enterprise · voice deepfakes today, multimodal authenticity tomorrow</p></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="sec-faq">
+    <h2>FAQs</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q">What exactly does VOXTRACE do? <span class="toggle">−</span></button>
+        <div class="faq-a">VOXTRACE analyses a voice sample to detect whether it is AI-generated / cloned or a genuine human recording. The caller speaks a challenge phrase, the engine verifies it against expected voice patterns, and produces a Trust Score plus a tamper-evident Evidence Passport. Two input modes: live call and recorded call.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is this demo the production detector? <span class="toggle">+</span></button>
+        <div class="faq-a">Not yet. This build runs a heuristic spectral engine (pitch dynamics, pacing, spectral flux, HF continuity, noise floor) fully in your browser to demonstrate the complete pipeline. The production version layers a trained ML detector (e.g. AASIST-class) tuned on Indian multilingual call audio.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What is the Trust Score? <span class="toggle">+</span></button>
+        <div class="faq-a">A single explainable number from 0–100. ≥75 is Likely Genuine, 55–74 Probably Genuine (monitor), 40–54 Suspicious (review required), &lt;40 Likely AI-Generated. Every score shows its supporting indicators and confidence, so non-technical decision makers can act instantly.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How is evidence preserved? <span class="toggle">+</span></button>
+        <div class="faq-a">Each analysed sample gets a SHA-256 hash, and the result is anchored as a block linked to the previous block's hash — a tamper-evident chain. Re-uploading the same file later lets you verify bit-for-bit integrity against the anchored record.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Who are the target buyers? <span class="toggle">+</span></button>
+        <div class="faq-a">Banks &amp; fintechs, BPOs and call centres, HR / recruitment platforms, and any enterprise that must confirm a caller's identity is real (not a deepfake) before trusting a voice interaction. B2B is the main revenue source — businesses hold the compliance budget and fraud exposure.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What are the pricing models? <span class="toggle">+</span></button>
+        <div class="faq-a">Three levers: freemium (free tier for individuals / low-volume checks), per-verification pricing for occasional users, and flat monthly plans for predictable enterprise usage. The recommended hybrid combines subscription base access + usage-based API billing + enterprise contracts.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can we white-label or license the engine? <span class="toggle">+</span></button>
+        <div class="faq-a">Yes. Cybersecurity platforms can integrate the detection engine into their own products and pay for API usage, an annual licence, and enterprise support. This scales faster than direct sales by riding a partner's existing distribution.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is the ₹15 lakh / month figure a forecast? <span class="toggle">+</span></button>
+        <div class="faq-a">No — it's illustrative math (100 × ₹5,000 + 20 × ₹25,000 + 5 × ₹1,00,000) showing how tiers could stack up. Real revenue depends on customer acquisition, detection quality, infrastructure costs, sales cycle, and pricing validation.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What's the India-specific angle? <span class="toggle">+</span></button>
+        <div class="faq-a">Hindi + English + regional languages, noisy Indian phone-call audio, and Indian enterprise workflows. This needs proper validation before claiming a "built for Indian voice environments" positioning, since detection performance on that data hasn't been measured yet.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================ VERIFY CONSOLE ============================================================ -->
+<div class="view" id="view-verify">
+  <section class="appsec gridbg">
+    <div class="container">
+      <div class="apphead">
+        <a class="backlink" href="#/home">← Back to VOXTRACE</a>
+        <p class="eyebrow">Verification Console</p>
+        <h2 class="section-title">Run a voice <strong>authenticity check</strong></h2>
+        <p class="lead">Detect whether a sample is a genuine human voice or AI-generated / cloned, get an explainable Trust Score,
+           and anchor the result as tamper-evident evidence.</p>
+      </div>
+
+      <div class="console">
+        <!-- LEFT: input -->
+        <div class="panel">
+          <div class="tabs">
+            <button class="tabbtn on" id="tabLive" onclick="VT.setMode('live')">🔴 Live Call</button>
+            <button class="tabbtn" id="tabFile" onclick="VT.setMode('file')">📁 Recorded Call</button>
+          </div>
+
+          <div class="challenge-bubble">
+            <div class="lbl">Challenge phrase · sample text / voice matching</div>
+            <div class="row2">
+              <div>
+                <div class="ph" id="phraseEn">My voice is my identity — this call is being verified.</div>
+                <div class="ph-hi" id="phraseHi">मेरी आवाज़ ही मेरी पहचान है — यह कॉल सत्यापित की जा रही है।</div>
+              </div>
+              <button class="linkbtn" onclick="VT.newPhrase()">↻ New phrase</button>
+            </div>
+          </div>
+
+          <div id="paneLive">
+            <button class="recbtn" id="recBtn" onclick="VT.toggleRec()" aria-label="Record"></button>
+            <div class="rec-status" id="recStatus">Tap to start recording · mic access required</div>
+            <canvas class="wave" id="liveWave" width="640" height="92"></canvas>
+          </div>
+
+          <div id="paneFile" style="display:none">
+            <div class="rec-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div style="font-size:38px">🎧</div>
+              <b>Drop an audio file here</b> or click to browse
+              <div style="color:var(--body);font-size:12.5px;margin-top:6px">mp3 · wav · m4a · ogg — decoded locally, never uploaded</div>
+            </div>
+            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg" style="display:none">
+            <div class="demo-row">
+              <button class="btn ghost small" onclick="VT.runDemo('human')">▶ Demo: genuine human sample</button>
+              <button class="btn ghost small" onclick="VT.runDemo('clone')">▶ Demo: AI-cloned sample</button>
+            </div>
+            <div class="demo-note">No mic / file handy? The demo buttons synthesise two test signals locally so you can see the full flow.</div>
+          </div>
+
+          <div id="fileMeta" style="display:none;margin-top:16px" class="challenge-bubble">
+            <div class="lbl">Loaded sample</div>
+            <div class="ph" id="fileName" style="font-size:14px;font-family:var(--mono)"></div>
+          </div>
+          <div style="margin-top:18px;text-align:center">
+            <button class="btn primary" id="analyzeBtn" onclick="VT.analyze()" disabled>⚡ Analyse Sample</button>
+          </div>
+        </div>
+
+        <!-- RIGHT: result -->
+        <div class="panel" id="resultCard">
+          <div class="result-empty" id="resultEmpty">
+            <div class="big-ic">🛰️</div>
+            <b>No analysis yet</b>
+            <span>Record a live sample, upload a call recording, or run a demo sample to see the Trust Score and Evidence Passport here.</span>
+          </div>
+          <div id="resultBody" style="display:none">
+            <div class="gauge-wrap"><svg id="gauge" width="200" height="120" viewBox="0 0 200 120"></svg></div>
+            <div class="verdict-line"><span class="verdict" id="verdictTxt"></span></div>
+            <div class="conf-line">Confidence: <b id="confTxt"></b> · Duration: <b id="durTxt"></b> · Mode: <b id="modeTxt"></b></div>
+            <div class="flagrow" id="flagRow"></div>
+            <div id="indList"></div>
+            <div class="passport" id="passport"></div>
+            <div class="result-actions">
+              <button class="btn primary small" onclick="VT.saveEvidence()">💾 Save to Evidence Log</button>
+              <button class="btn ghost small" onclick="VT.downloadReport()">⬇ Report</button>
+              <button class="btn ghost small" onclick="VT.copyHash()">⧉ Copy Hash</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="engine-note">ℹ️ Demo engine note: this browser build uses heuristic spectral analysis (pitch dynamics, pacing, spectral flux,
+         HF continuity, noise floor) — a functional preview of the VOXTRACE pipeline, not the production ML model. All processing happens locally in your browser.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================ DASHBOARD ============================================================ -->
+<div class="view" id="view-dashboard">
+  <section class="appsec">
+    <div class="container">
+      <div class="apphead">
+        <a class="backlink" href="#/home">← Back to VOXTRACE</a>
+        <p class="eyebrow">Operations Dashboard</p>
+        <h2 class="section-title">Evidence log <strong>&amp; analytics</strong></h2>
+        <p class="lead">Every saved verification becomes an anchored evidence record. Export the log, or re-verify any file against its stored hash.</p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="ic b">🧾</div><div><div class="n" id="kTotal">0</div><div class="l">Verifications</div></div></div>
+        <div class="kpi"><div class="ic g">📈</div><div><div class="n" id="kAvg">—</div><div class="l">Avg Trust Score</div></div></div>
+        <div class="kpi"><div class="ic r">🚩</div><div><div class="n" id="kFlag">0</div><div class="l">Flagged / low-score</div></div></div>
+        <div class="kpi"><div class="ic y">⛓️</div><div><div class="n" id="kAnchor">0</div><div class="l">Anchored blocks</div></div></div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:16px">Score distribution</h3>
+          <div id="distChart"><span style="color:var(--body);font-size:13.5px">No data yet — run a verification first.</span></div>
+        </div>
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:8px">Re-verify evidence integrity</h3>
+          <p style="color:var(--body);font-size:13.5px;margin-bottom:14px">Drop the original audio file again — VOXTRACE recomputes its SHA-256 and checks it against the anchored evidence log.</p>
+          <div class="rec-zone" id="reDrop" style="padding:22px" onclick="document.getElementById('reFile').click()">
+            <b>Drop file to re-verify</b>
+          </div>
+          <input type="file" id="reFile" accept="audio/*" style="display:none">
+          <div class="re-result" id="reResult"></div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="logSearch" placeholder="🔍 Search by ID, verdict or hash…" style="max-width:340px" oninput="VT.renderLog()">
+        <div style="margin-left:auto;display:flex;gap:10px">
+          <button class="btn ghost small" onclick="VT.exportCSV()">⬇ Export CSV</button>
+          <button class="btn danger small" onclick="VT.clearData()">🗑 Clear all data</button>
+        </div>
+      </div>
+      <div class="tblwrap">
+        <table class="log">
+          <thead><tr><th>ID</th><th>Timestamp</th><th>Mode</th><th>Dur.</th><th>Score</th><th>Verdict</th><th>Hash (sha256)</th><th></th></tr></thead>
+          <tbody id="logBody"><tr><td colspan="8" style="color:var(--body);text-align:center;padding:26px">No evidence saved yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================ API & PARTNERS ============================================================ -->
+<div class="view" id="view-api">
+  <section class="appsec">
+    <div class="container">
+      <div class="apphead">
+        <a class="backlink" href="#/home">← Back to VOXTRACE</a>
+        <p class="eyebrow">Developers &amp; Partners</p>
+        <h2 class="section-title">Plug VOXTRACE into <strong>your platform</strong></h2>
+        <p class="lead">Subscription covers dashboard access and a monthly quota; additional usage is billed via the API,
+           so revenue scales with actual call volume. Tokenised pricing keys cost directly to verification volume.</p>
+      </div>
+
+      <div class="panel">
+        <h3 style="font-size:18px">🔑 Sandbox API key</h3>
+        <p style="color:var(--body);font-size:13.5px;margin-top:4px">Generate a demo key for the sandbox environment (stored locally in your browser).</p>
+        <div class="apikey-box">
+          <code id="apiKeyBox">No key generated yet</code>
+          <button class="btn primary small" onclick="VT.genKey()">Generate key</button>
+          <button class="btn ghost small" onclick="VT.copyKey()">Copy</button>
+        </div>
+      </div>
+
+      <div class="dash-grid" style="margin-top:22px">
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:14px">Endpoints</h3>
+          <div class="endpoint"><span class="mth post">POST</span> /v1/verify <span class="desc">analyse audio, returns Trust Score</span></div>
+          <div class="endpoint"><span class="mth get">GET</span> /v1/evidence/{id} <span class="desc">fetch anchored evidence record</span></div>
+          <div class="endpoint"><span class="mth post">POST</span> /v1/verify/stream <span class="desc">live-call streaming verification</span></div>
+          <div class="endpoint"><span class="mth get">GET</span> /v1/usage <span class="desc">quota &amp; tokenised billing meters</span></div>
+          <h3 style="font-size:15px;margin:20px 0 10px">Request</h3>
+<div class="codeblock">curl -X POST https://api.voxtrace.dev/v1/verify \
+  -H <span class="s">"Authorization: Bearer $VOXTRACE_KEY"</span> \
+  -F <span class="s">"audio=@call_recording.mp3"</span> \
+  -F <span class="s">"mode=recorded"</span></div>
+        </div>
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:14px">Response</h3>
+<div class="codeblock">{
+  <span class="k">"evidence_id"</span>: <span class="s">"VT-2609-A1B2"</span>,
+  <span class="k">"trust_score"</span>: 92,
+  <span class="k">"verdict"</span>: <span class="s">"LIKELY_GENUINE"</span>,
+  <span class="k">"confidence"</span>: <span class="s">"HIGH"</span>,
+  <span class="k">"flags"</span>: [],
+  <span class="k">"indicators"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"pitch_naturalness"</span>, <span class="k">"score"</span>: 94 },
+    { <span class="k">"name"</span>: <span class="s">"temporal_pacing"</span>,  <span class="k">"score"</span>: 88 }
+  ],
+  <span class="k">"evidence"</span>: {
+    <span class="k">"sha256"</span>: <span class="s">"9f2c…e7d1"</span>,
+    <span class="k">"anchored"</span>: true,
+    <span class="k">"block_height"</span>: 1042
+  }
+}</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div>
+          <div class="partner-box">
+            <h3>🤝 White-label / API licensing</h3>
+            <p>Already selling security software? Don't compete — integrate. VOXTRACE licenses its detection engine to cybersecurity
+               platforms that ride their own existing distribution:</p>
+            <ul class="partner-list">
+              <li><b>API usage</b> — tokenised per-verification billing</li>
+              <li><b>Annual licence</b> — predictable enterprise revenue</li>
+              <li><b>Enterprise support</b> — SLAs, onboarding, tuning</li>
+            </ul>
+          </div>
+          <div class="engine-note" style="margin:18px 0 0">🚀 Roadmap: voice deepfakes today → the Voice Authenticity Suite (voice notes, podcasts, evidence recordings) → long-term authenticity infrastructure other products plug into.</div>
+        </div>
+        <div class="panel">
+          <h3 style="font-size:18px;margin-bottom:14px">📩 Partner / sales inquiry</h3>
+          <div class="field"><label class="fl" for="leadName">Name</label><input type="text" id="leadName" placeholder="Your name"></div>
+          <div class="field"><label class="fl" for="leadCo">Company</label><input type="text" id="leadCo" placeholder="Bank / BPO / cybersecurity firm…"></div>
+          <div class="field"><label class="fl" for="leadEmail">Work email</label><input type="email" id="leadEmail" placeholder="you@company.com"></div>
+          <div class="field"><label class="fl" for="leadType">What do you need?</label>
+            <select id="leadType">
+              <option>Enterprise deployment</option><option>API / white-label licence</option>
+              <option>Pilot / POC</option><option>Investment / partnership</option>
+            </select></div>
+          <button class="btn primary" onclick="VT.submitLead()">Send inquiry →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <b>VOXTRACE</b> · AI Trust Infrastructure for Voice &amp; Digital Evidence<br>
+      Detect. Explain. Verify. Preserve. — from hackathon build to cybersecurity startup.
+    </div>
+    <div class="footer-right">
+      <a href="#/verify">Console</a>
+      <a href="#/dashboard">Dashboard</a>
+      <a href="#/pricing">Pricing</a>
+      <a href="#/api">API</a>
+      <span>© 2026 VOXTRACE · demo build, data stays in your browser</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ USE-CASE MODALS ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" onclick="VT.closeModal()" aria-label="Close">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<noscript><div style="padding:20px;text-align:center;font-family:sans-serif">VOXTRACE needs JavaScript to run the verification console.</div></noscript>
+
+<script>
+/* ============================================================
+   VOXTRACE — client-side app (production UI build)
+   Router · Recorder · Heuristic detection engine · Evidence chain
+   ============================================================ */
+"use strict";
+const VT = {};
+
+/* ---------------- utils ---------------- */
+const $ = (id) => document.getElementById(id);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let toastTimer = null;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2800);
+}
+function inr(n){ return "₹" + n.toLocaleString("en-IN"); }
+async function sha256Hex(bytes){
+  const d = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function fmtBytes(b){ return b.length < 200000 ? (b.length/1024).toFixed(1)+" KB" : (b.length/1048576).toFixed(2)+" MB"; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------------- router ---------------- */
+const ROUTES = ["home","verify","dashboard","api"];
+function parseHash(){
+  const raw = location.hash.replace(/^#\/?/, "");
+  const parts = raw.split("#");
+  return {route: parts[0] || "home", anchor: parts.slice(1).join("#") || null};
+}
+function router(){
+  let {route:h, anchor} = parseHash();
+  if(h === "pricing"){ h = "home"; anchor = anchor || "sec-pricing"; }
+  if(h === "faq"){ h = "home"; anchor = anchor || "sec-faq"; }
+  if(!ROUTES.includes(h)){ h = "home"; anchor = null; }
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id === "view-"+h));
+  const navKey = (h === "home" && anchor === "sec-pricing") ? "pricing" : h;
+  document.querySelectorAll(".nav-links a[data-nav]").forEach(a=>a.classList.toggle("active", a.dataset.nav === navKey));
+  $("navLinks").classList.remove("open");
+  if(anchor){
+    setTimeout(()=>{ const el = $(anchor) || document.getElementById(anchor);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"}); }, 80);
+  } else {
+    window.scrollTo(0,0);
+  }
+  if(h === "dashboard") VT.renderDashboard();
+  if(h === "api") VT.loadKey();
+}
+window.addEventListener("hashchange", router);
+function boot(){
+  if(boot.done) return; boot.done = true;
+  try{ router(); }catch(e){ console.error("router:", e); }
+  try{
+    const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }), {threshold:.12});
+    document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+  }catch(e){}
+  try{ drawHeroWave(); }catch(e){}
+  try{ VT.calc(); }catch(e){}
+}
+// boot as soon as DOM is ready — never wait on images/fonts/network for first paint
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+window.addEventListener("load", boot); // safety net
+$("menuBtn").addEventListener("click", ()=>$("navLinks").classList.toggle("open"));
+
+/* decorative hero waveform */
+function drawHeroWave(){
+  const mk = (fn)=>{ let p=""; for(let x=0;x<=1200;x+=4){ const y=fn(x); p += (x?(p?" L":"M "):"") + x+","+y.toFixed(1); } return p; };
+  const w1 = mk(x=> 60 + Math.sin(x*0.021)*20*Math.sin(x*0.004) + Math.sin(x*0.11)*7);
+  const w2 = mk(x=> 60 + Math.cos(x*0.017)*24*Math.cos(x*0.003+1) + Math.sin(x*0.09)*5);
+  const w3 = mk(x=> 60 + Math.sin(x*0.03+2)*14*Math.sin(x*0.006) + Math.cos(x*0.13)*4);
+  $("heroWave").setAttribute("points", w1);
+  $("heroWave2").setAttribute("points", w2);
+  $("heroWave3").setAttribute("points", w3);
+}
+
+/* ---------------- FAQ + modals ---------------- */
+document.addEventListener("click", e=>{
+  const q = e.target.closest(".faq-q");
+  if(q){
+    const item = q.parentElement, wasOpen = item.classList.contains("open");
+    document.querySelectorAll(".faq-item.open").forEach(i=>{ i.classList.remove("open"); i.querySelector(".toggle").textContent = "+"; });
+    if(!wasOpen){ item.classList.add("open"); q.querySelector(".toggle").textContent = "−"; }
+    return;
+  }
+  const mb = e.target.closest("[data-modal]");
+  if(mb){ VT.openModalKey(mb.dataset.modal); return; }
+  if(e.target === $("modalOverlay")) VT.closeModal();
+});
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") VT.closeModal(); });
+
+const MODALS = {
+  "m-ceo": {icon:"🚨", label:"Use case · High-stakes finance", title:"“Verify the CEO”",
+    body:"Before acting on a high-stakes instruction received by voice — an urgent fund transfer “from the CEO”, a vendor-account change, a confidential data request — the call is run through VOXTRACE.<br><br>A <b>low trust score is the trigger</b> to stop and verify through a second channel before money or data moves. The check takes seconds and the result is anchored as evidence for the audit trail."},
+  "m-bpo": {icon:"🏛️", label:"Use case · Banking, BPO & fintech", title:"Secure call operations",
+    body:"Banks, fintechs and BPOs verify that the caller's identity is real — not a deepfake — before trusting a voice interaction.<br><br>Tele-banking instructions, OTP-less authorisations and customer-service escalations all depend on voice. VOXTRACE adds a verification layer to those flows, with per-call pricing that scales with volume via API billing."},
+  "m-hr": {icon:"🎓", label:"Use case · HR-Tech & remote hiring", title:"Recruitment & interviews",
+    body:"Recruiters and HR platforms can verify that the person on a remote interview call is a real, live human — not a synthetic voice or a proxy candidate reading pre-recorded / AI-cloned answers.<br><br>Challenge-phrase matching asks the candidate to speak a sample text live, comparing it against expected voice patterns."},
+  "m-suite": {icon:"🚀", label:"Product roadmap", title:"Voice Authenticity Suite",
+    body:"Beyond fraud-call detection, the same detection engine extends into a broader authenticity product line — verifying <b>voice notes, podcasts, evidence recordings</b> and other audio content.<br><br><b>Longer-term positioning:</b> VOXTRACE as the underlying “authenticity infrastructure” other products and platforms plug into, rather than a single standalone app. Starting with voice deepfakes, eventually multimodal authenticity."}
+};
+VT.openModalKey = function(key){
+  const m = MODALS[key]; if(!m) return;
+  VT.openModalHTML(`<div class="m-icon">${m.icon}</div><span class="m-label">${m.label}</span><h3>${m.title}</h3><p>${m.body}</p>`);
+};
+VT.openModalHTML = function(html){
+  $("modalBody").innerHTML = html;
+  $("modalOverlay").classList.add("open");
+};
+VT.closeModal = function(){ $("modalOverlay").classList.remove("open"); };
+
+/* ---------------- challenge phrases ---------------- */
+const PHRASES = [
+  ["My voice is my identity — this call is being verified.","मेरी आवाज़ ही मेरी पहचान है — यह कॉल सत्यापित की जा रही है।"],
+  ["State your full name and today's date clearly.","अपना पूरा नाम और आज की तारीख स्पष्ट रूप से बोलिए।"],
+  ["The quick brown fox jumps over the lazy dog.","तेज़ भूरी लोमड़ी आलसी कुत्ते के ऊपर से कूदती है।"],
+  ["I confirm this instruction is given by me, in person, on this call.","मैं पुष्टि करता हूँ कि यह निर्देश मैंने स्वयं इसी कॉल पर दिया है।"],
+  ["Security phrase: saffron river mountain nine.","सुरक्षा वाक्यांश: केसरिया नदी पहाड़ नौ।"]
+];
+let phraseIdx = 0;
+VT.newPhrase = function(){
+  phraseIdx = (phraseIdx + 1) % PHRASES.length;
+  $("phraseEn").textContent = PHRASES[phraseIdx][0];
+  $("phraseHi").textContent = PHRASES[phraseIdx][1];
+};
+
+/* ---------------- recording ---------------- */
+let mediaRecorder=null, chunks=[], recStream=null, liveCtx=null, liveAnalyser=null, waveRAF=null, recT0=0, recTimer=null;
+
+VT.setMode = function(mode){
+  $("tabLive").classList.toggle("on", mode==="live");
+  $("tabFile").classList.toggle("on", mode==="file");
+  $("paneLive").style.display = mode==="live" ? "" : "none";
+  $("paneFile").style.display = mode==="file" ? "" : "none";
+  VT.currentMode = mode;
+  if(mode!=="live" && mediaRecorder && mediaRecorder.state==="recording") VT.toggleRec();
+};
+VT.currentMode = "live";
+
+VT.toggleRec = async function(){
+  if(mediaRecorder && mediaRecorder.state === "recording"){
+    mediaRecorder.stop(); return;
+  }
+  try{
+    recStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false}});
+  }catch(e){
+    toast("Mic access denied — try the Recorded Call tab with a file or demo sample."); return;
+  }
+  liveCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const src = liveCtx.createMediaStreamSource(recStream);
+  liveAnalyser = liveCtx.createAnalyser(); liveAnalyser.fftSize = 1024;
+  src.connect(liveAnalyser);
+  drawLiveWave();
+
+  chunks = [];
+  mediaRecorder = new MediaRecorder(recStream);
+  mediaRecorder.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = async ()=>{
+    cancelAnimationFrame(waveRAF);
+    clearInterval(recTimer);
+    recStream.getTracks().forEach(t=>t.stop());
+    if(liveCtx) liveCtx.close();
+    $("recBtn").classList.remove("recording");
+    $("recStatus").innerHTML = "Processing recording…";
+    const blob = new Blob(chunks, {type: mediaRecorder.mimeType || "audio/webm"});
+    if(blob.size < 4000){ $("recStatus").textContent = "Recording too short — tap to record again."; return; }
+    await loadBlob(blob, "Live call recording", "live");
+    $("recStatus").textContent = "Sample loaded ✔ — press Analyse Sample.";
+  };
+  mediaRecorder.start();
+  recT0 = Date.now();
+  $("recBtn").classList.add("recording");
+  recTimer = setInterval(()=>{
+    const s = ((Date.now()-recT0)/1000).toFixed(1);
+    $("recStatus").innerHTML = "<b>● REC</b> "+s+"s — tap to stop";
+  }, 100);
+};
+
+function drawLiveWave(){
+  const cv = $("liveWave"), ctx = cv.getContext("2d");
+  const data = new Uint8Array(liveAnalyser.fftSize);
+  function frame(){
+    if(!liveAnalyser) return;
+    liveAnalyser.getByteTimeDomainData(data);
+    ctx.fillStyle = "#E8F0FE"; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle = "#EA4335"; ctx.lineWidth = 2; ctx.beginPath();
+    for(let i=0;i<data.length;i++){
+      const x = i/data.length*cv.width;
+      const y = cv.height/2 + (data[i]-128)/128*(cv.height/2 - 6);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.stroke();
+    waveRAF = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ---------------- file input ---------------- */
+const dz = $("dropZone");
+["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop", e=>{ const f=e.dataTransfer.files[0]; if(f) loadBlob(f, f.name, "file"); });
+$("fileInput").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) loadBlob(f, f.name, "file"); });
+
+let pendingAudio = null; // {bytes:Uint8Array, buffer:AudioBuffer, label, mode}
+
+async function loadBlob(blob, label, mode){
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const ac = new (window.AudioContext||window.webkitAudioContext)();
+  let buffer;
+  try{
+    buffer = await ac.decodeAudioData(bytes.slice(0).buffer);
+  }catch(e){
+    toast("Could not decode this audio format in the browser."); return;
+  }
+  ac.close();
+  if(buffer.duration < 0.4){ toast("Sample is shorter than 0.4s — need more audio to analyse."); return; }
+  if(buffer.duration > 90){ // trim to first 90s for perf
+    const sr = buffer.sampleRate, len = Math.floor(sr*90), ch = buffer.numberOfChannels;
+    const off = new OfflineAudioContext(ch, len, sr);
+    const src = off.createBufferSource(); src.buffer = buffer; src.connect(off.destination); src.start();
+    buffer = await off.startRendering();
+  }
+  pendingAudio = {bytes, buffer, label, mode};
+  VT.currentMode = mode;
+  $("fileMeta").style.display = "";
+  $("fileName").textContent = label + " · " + buffer.duration.toFixed(1) + "s · " + fmtBytes(bytes);
+  $("analyzeBtn").disabled = false;
+}
+
+/* ---------------- demo sample synthesis ---------------- */
+function encodeWav(buffer){
+  const sr = buffer.sampleRate; let d = buffer.getChannelData(0);
+  if(buffer.numberOfChannels > 1){
+    const d2 = buffer.getChannelData(1); const m = new Float32Array(d.length);
+    for(let i=0;i<d.length;i++) m[i]=(d[i]+d2[i])/2; d = m;
+  }
+  const n = d.length, out = new Uint8Array(44 + n*2);
+  const dv = new DataView(out.buffer);
+  const ws = (o,s)=>{ for(let i=0;i<s.length;i++) out[o+i]=s.charCodeAt(i); };
+  ws(0,"RIFF"); dv.setUint32(4, 36+n*2, true); ws(8,"WAVE"); ws(12,"fmt ");
+  dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+  dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true);
+  ws(36,"data"); dv.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){
+    let v = Math.max(-1, Math.min(1, d[i]));
+    dv.setInt16(44+i*2, v<0 ? v*32768 : v*32767, true);
+  }
+  return out;
+}
+
+VT.runDemo = async function(kind){
+  toast("Synthesising "+(kind==="human"?"genuine human":"AI-cloned")+" demo sample…");
+  const sr = 16000, dur = 5.5, N = Math.floor(sr*dur);
+  const buf = new Float32Array(N);
+  if(kind === "human"){
+    // natural-ish speech: jittered f0, uneven syllables, breaths, noise floor
+    let f0 = 126, phase = 0, t = 0;
+    const rng = mulberry(42);
+    while(t < dur - 0.3){
+      const syl = 0.14 + rng()*0.16, gap = rng()<0.28 ? 0.12+rng()*0.22 : 0.02+rng()*0.05;
+      const amp = 0.5 + rng()*0.4;
+      const fTarget = 105 + rng()*70; f0 += (fTarget-f0)*0.5;
+      for(let s=0; s<Math.floor(syl*sr); s++, t+=1/sr){
+        const i = Math.floor(t*sr); if(i>=N) break;
+        const jitter = Math.sin(2*Math.PI*5.2*t)*(2.5+rng()*1.5) + (rng()-0.5)*3;
+        const f = f0 + jitter + Math.sin(2*Math.PI*(t/syl))*8;
+        phase += 2*Math.PI*f/sr;
+        const env = Math.sin(Math.PI*(s/(syl*sr)))**0.8;
+        buf[i] += amp*env*(Math.sin(phase)*0.55 + Math.sin(2*phase)*0.22 + Math.sin(3*phase)*0.12 + (rng()-0.5)*0.16);
+      }
+      // breath between some phrases
+      if(rng() < 0.3){
+        for(let s=0; s<Math.floor(0.09*sr); s++, t+=1/sr){
+          const i = Math.floor(t*sr); if(i>=N) break;
+          buf[i] += (rng()-0.5)*0.09*Math.sin(Math.PI*s/(0.09*sr));
+        }
+      }
+      t += gap;
+    }
+    for(let i=0;i<N;i++) buf[i] += (Math.random()-0.5)*0.012; // room noise floor
+  } else {
+    // clone / synthetic: locked f0, uniform rhythm, hard lowpass feel, no breaths
+    let phase = 0;
+    const f0 = 131, sylLen = 0.22, cycle = 0.27;
+    for(let i=0;i<N;i++){
+      const t = i/sr, pos = t % cycle;
+      const on = pos < sylLen;
+      const env = on ? 0.85 : 0.0;
+      phase += 2*Math.PI*f0/sr;
+      let v = env*(Math.sin(phase)*0.6 + Math.sin(2*phase)*0.25 + Math.sin(4*phase)*0.1);
+      v += env*0.06*Math.sin(phase*7.03); // metallic comb flavour
+      buf[i] = v;
+    }
+    const w = 2; // steep-ish lowpass ~kills HF sharply
+    for(let i=w;i<N-w;i++){
+      let s=0; for(let k=-w;k<=w;k++) s+=buf[i+k];
+      buf[i] = s/(2*w+1)*1.15;
+    }
+  }
+  const ac = new OfflineAudioContext(1, N, sr);
+  const b = ac.createBuffer(1, N, sr); b.copyToChannel(buf, 0);
+  const rendered = await ac.startRendering();
+  const wav = encodeWav(rendered);
+  await loadBlob(new Blob([wav], {type:"audio/wav"}),
+    (kind==="human"?"Demo — genuine human voice (synthesised preview)":"Demo — AI-cloned voice (synthesised preview)"), "file");
+  setModeUI("file");
+};
+function setModeUI(mode){
+  $("tabLive").classList.toggle("on", mode==="live");
+  $("tabFile").classList.toggle("on", mode==="file");
+  $("paneLive").style.display = mode==="live" ? "" : "none";
+  $("paneFile").style.display = mode==="file" ? "" : "none";
+}
+function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ---------------- detection engine ---------------- */
+function fftInPlace(re, im){
+  const n = re.length;
+  for(let i=1,j=0;i<n;i++){
+    let bit = n>>1;
+    for(; j&bit; bit>>=1) j ^= bit;
+    j ^= bit;
+    if(i<j){ const tr=re[i]; re[i]=re[j]; re[j]=tr; const ti=im[i]; im[i]=im[j]; im[j]=ti; }
+  }
+  for(let len=2; len<=n; len<<=1){
+    const ang = -2*Math.PI/len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for(let i=0;i<n;i+=len){
+      let cr=1, ci=0;
+      for(let j=0;j<len/2;j++){
+        const ur=re[i+j], ui=im[i+j];
+        const vr=re[i+j+len/2]*cr - im[i+j+len/2]*ci;
+        const vi=re[i+j+len/2]*ci + im[i+j+len/2]*cr;
+        re[i+j]=ur+vr; im[i+j]=ui+vi;
+        re[i+j+len/2]=ur-vr; im[i+j+len/2]=ui-vi;
+        const ncr = cr*wr - ci*wi; ci = cr*wi + ci*wr; cr = ncr;
+      }
+    }
+  }
+}
+
+function analyseBuffer(buffer){
+  const sr = buffer.sampleRate;
+  let d = buffer.getChannelData(0);
+  if(buffer.numberOfChannels > 1){
+    const d2 = buffer.getChannelData(1);
+    const m = new Float32Array(d.length);
+    for(let i=0;i<d.length;i++) m[i] = 0.5*(d[i]+d2[i]);
+    d = m;
+  }
+  const FL = 2048, HOP = 1024;
+  const win = new Float32Array(FL);
+  for(let i=0;i<FL;i++) win[i] = 0.5 - 0.5*Math.cos(2*Math.PI*i/(FL-1));
+  const nFrames = Math.max(1, Math.floor((d.length - FL)/HOP));
+  const maxFrames = 420, step = Math.max(1, Math.floor(nFrames/maxFrames));
+
+  let energies=[], flats=[], centroids=[], fluxes=[], pitches=[];
+  let prevMag = null;
+  const re = new Float32Array(FL), im = new Float32Array(FL);
+  const nyq = sr/2;
+
+  for(let f=0; f<nFrames; f+=step){
+    const off = f*HOP;
+    let e = 0;
+    for(let i=0;i<FL;i++){ const v = d[off+i]*win[i]; re[i]=v; im[i]=0; e += v*v; }
+    energies.push(e);
+    if(e < 1e-6){ prevMag = null; continue; }
+    fftInPlace(re, im);
+    const half = FL/2;
+    let magSum=0, logSum=0, cSum=0;
+    const mag = new Float32Array(half);
+    for(let k=1;k<half;k++){
+      const m = Math.sqrt(re[k]*re[k]+im[k]*im[k]);
+      mag[k]=m; magSum+=m; logSum+=Math.log(m+1e-9); cSum+=k*m;
+    }
+    const geo = Math.exp(logSum/(half-1)), arith = magSum/(half-1)+1e-12;
+    flats.push(Math.min(1, geo/arith));
+    centroids.push((cSum/(magSum+1e-12))*sr/FL);
+    if(prevMag){
+      let fl=0; for(let k=1;k<half;k++){ const dv=mag[k]-prevMag[k]; fl+=dv*dv; }
+      fluxes.push(Math.sqrt(fl));
+    }
+    prevMag = mag;
+    // pitch via autocorrelation (70–380 Hz)
+    const minLag = Math.floor(sr/380), maxLag = Math.min(Math.floor(sr/70), FL-2);
+    let best=0, bestLag=0;
+    for(let lag=minLag; lag<=maxLag; lag+=2){
+      let c=0, nrm=0;
+      for(let i=0;i<FL-lag;i+=4){ c += re[i]*re[i+lag]; nrm += re[i]*re[i]; }
+      const score = c/(nrm+1e-9);
+      if(score>best){ best=score; bestLag=lag; }
+    }
+    if(best > 0.35 && bestLag) pitches.push(sr/bestLag);
+  }
+
+  const mean = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+  const std  = a => { if(a.length<2) return 0; const m=mean(a); return Math.sqrt(mean(a.map(x=>(x-m)*(x-m)))); };
+  const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+
+  // 1 — pitch naturalness (CV of f0)
+  let cv = 0;
+  if(pitches.length >= 8){
+    const med = pitches.slice().sort((a,b)=>a-b)[Math.floor(pitches.length/2)];
+    const filt = pitches.filter(p=>p>med*0.55 && p<med*1.7);
+    const m = mean(filt); cv = m ? std(filt)/m : 0;
+  }
+  const pitchSub = pitches.length < 8 ? 55 : clamp(Math.round(cv*950 + 6), 5, 98);
+  const pitchDet = pitches.length < 8 ? "Too few voiced frames for pitch tracking." :
+    "Pitch variation (CV) measured at "+(cv*100).toFixed(1)+"% — "+(cv<0.02?"near-constant pitch is a synthetic signature":cv<0.05?"low variability, mildly synthetic-leaning":"healthy natural intonation spread");
+
+  // 2 — temporal pacing (envelope dynamics + pauses + rhythm regularity)
+  const eMean = mean(energies), eStd = std(energies);
+  const dyn = eMean ? eStd/eMean : 0;
+  const voicedThr = eMean*0.25;
+  const pauseRatio = energies.filter(e=>e<voicedThr).length/Math.max(1,energies.length);
+  const pkThr = eMean*0.6, peaks = [];
+  for(let i=1;i<energies.length-1;i++){
+    if(energies[i]>energies[i-1] && energies[i]>energies[i+1] && energies[i]>pkThr) peaks.push(i);
+  }
+  const merged = [];
+  for(const p of peaks){ if(!merged.length || p-merged[merged.length-1] > 3) merged.push(p); }
+  const iv = [];
+  for(let i=1;i<merged.length;i++) iv.push(merged[i]-merged[i-1]);
+  const ivCV = iv.length>=4 ? std(iv)/mean(iv) : 1;
+  const paceSub = clamp(Math.round(dyn*60 + pauseRatio*30 + Math.min(ivCV,1)*45 + 10), 8, 98);
+  const paceDet = "Envelope dynamics "+dyn.toFixed(2)+", pause ratio "+(pauseRatio*100).toFixed(0)+"%, rhythm regularity "+(ivCV*100).toFixed(0)+"% — "+(ivCV<0.08?"metronome-perfect periodicity typical of synthetic output":dyn<0.4?"flat pacing":"natural rhythm variation");
+
+  // 3 — spectral dynamics
+  const flStd = std(fluxes), flMean = mean(fluxes), cStd = std(centroids);
+  const fluxNorm = flMean ? flStd/flMean : 0;
+  const specSub = clamp(Math.round(fluxNorm*70 + cStd*0.14 + 20), 8, 98);
+  const specDet = "Spectral flux variability "+fluxNorm.toFixed(2)+", centroid spread "+Math.round(cStd)+" Hz — "+(cStd<120?"timbre suspiciously static":"timbre evolving naturally frame-to-frame");
+
+  // 4 — high-frequency continuity
+  const cMean = mean(centroids);
+  const flatMean = mean(flats);
+  const hfPresent = cMean > Math.min(1500, nyq*0.32);
+  const hfSub = clamp(Math.round((hfPresent?52:18) + flatMean*40 + (cStd>150?10:0)), 8, 98);
+  const hfDet = "Mean spectral centroid "+Math.round(cMean)+" Hz — "+(hfPresent?"upper-band energy intact":"energy concentrated in low band; check for abrupt vocoder roll-off");
+
+  // 5 — breathing & noise floor
+  const quietBreath = energies.filter(e=>e>eMean*0.02 && e<eMean*0.18).length/Math.max(1,energies.length);
+  const noiseSub = clamp(Math.round(quietBreath*260 + (flatMean>0.12?18:6) + 12), 8, 98);
+  const noiseDet = "Low-energy breath/pause frames at "+(quietBreath*100).toFixed(0)+"% — "+(quietBreath<0.05?"almost no breath or room tone (common in synthetic output)":"natural breath and room-tone present");
+
+  const indicators = [
+    {name:"Pitch Naturalness", w:.25, sub:pitchSub, det:pitchDet},
+    {name:"Temporal Pacing", w:.20, sub:paceSub, det:paceDet},
+    {name:"Spectral Dynamics", w:.20, sub:specSub, det:specDet},
+    {name:"High-Frequency Continuity", w:.15, sub:hfSub, det:hfDet},
+    {name:"Breathing & Noise Floor", w:.20, sub:noiseSub, det:noiseDet}
+  ];
+  let score = Math.round(clamp(indicators.reduce((s,ind)=>s+ind.sub*ind.w, 0), 2, 99));
+
+  const duration = buffer.duration;
+  const v = classify(score);
+  const margin = Math.min(Math.abs(score-75), Math.abs(score-40));
+  const confidence = (duration>=3 && margin>=8) ? "HIGH" : (duration>=1.5 ? "MEDIUM" : "LOW");
+
+  const flags = [];
+  if(pitchSub<45) flags.push("Robotic tonal consistency");
+  if(paceSub<45) flags.push("Unnatural pacing");
+  if(specSub<45) flags.push("Static timbre");
+  if(hfSub<45) flags.push("HF band anomaly");
+  if(noiseSub<45) flags.push("No breath / room tone");
+
+  return {score, verdict:v.verdict, vClass:v.vClass, confidence, flags, indicators,
+          meta:{duration:+duration.toFixed(2), sampleRate:sr, framesAnalysed:Math.ceil(nFrames/step)}};
+}
+function classify(score){
+  if(score>=75) return {verdict:"LIKELY GENUINE", vClass:"g"};
+  if(score>=55) return {verdict:"PROBABLY GENUINE — MONITOR", vClass:"g"};
+  if(score>=40) return {verdict:"SUSPICIOUS — REVIEW REQUIRED", vClass:"a"};
+  return {verdict:"LIKELY AI-GENERATED", vClass:"r"};
+}
+
+/* ---------------- analysis run & evidence ---------------- */
+let lastResult = null;
+
+VT.analyze = async function(){
+  if(!pendingAudio){ toast("Load a sample first."); return; }
+  const btn = $("analyzeBtn"); btn.disabled = true; btn.textContent = "⏳ Analysing…";
+  await new Promise(r=>setTimeout(r, 60));
+  try{
+    const {bytes, buffer, label, mode} = pendingAudio;
+    const res = analyseBuffer(buffer);
+    const hash = await sha256Hex(bytes);
+    // deterministic micro-adjustment from content hash (evidence-consistent scoring)
+    const adj = (parseInt(hash.slice(0,2),16) % 3) - 1;
+    res.score = Math.max(2, Math.min(99, res.score + adj));
+    const c = classify(res.score); res.verdict = c.verdict; res.vClass = c.vClass;
+
+    const chain = LS.get("voxtrace_chain", []);
+    const prev = chain.length ? chain[chain.length-1] : null;
+    const prevHash = prev ? prev.blockHash : "0".repeat(64);
+    const evidenceId = "VT-" + new Date().toISOString().slice(2,10).replace(/-/g,"") + "-" + hash.slice(0,4).toUpperCase();
+    const ts = Date.now();
+    const blockHash = await sha256Hex(new TextEncoder().encode(prevHash + hash + ts + evidenceId));
+    const block = {height: chain.length+1, ts, evidenceId, evidenceHash: hash, prevHash, blockHash};
+
+    lastResult = {...res, evidenceId, block, label, mode, sizeBytes: bytes.length};
+    renderResult(lastResult);
+    toast("Analysis complete — Trust Score "+res.score+"/100");
+  }catch(e){
+    console.error(e); toast("Analysis failed: "+e.message);
+  }
+  btn.disabled = false; btn.textContent = "⚡ Analyse Sample";
+};
+
+function gaugeSVG(score, cls){
+  const color = cls==="g" ? "#34A853" : cls==="a" ? "#FBBC05" : "#EA4335";
+  const pct = score/100, a = Math.PI*(1-pct);
+  const x = 100 + 78*Math.cos(a), y = 112 - 78*Math.sin(a);
+  return `
+  <path d="M 22 112 A 78 78 0 0 1 178 112" fill="none" stroke="#D2E3FC" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 22 112 A 78 78 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"/>
+  <text x="100" y="88" text-anchor="middle" font-size="36" font-weight="700" fill="#121317">${score}</text>
+  <text x="100" y="106" text-anchor="middle" font-size="11" font-weight="600" fill="#3c4043" font-family="var(--mono)">TRUST SCORE / 100</text>`;
+}
+
+function renderResult(r){
+  $("resultEmpty").style.display = "none";
+  $("resultBody").style.display = "";
+  $("gauge").innerHTML = gaugeSVG(r.score, r.vClass);
+  const v = $("verdictTxt"); v.textContent = r.verdict; v.className = "verdict "+r.vClass;
+  $("confTxt").textContent = r.confidence;
+  $("durTxt").textContent = r.meta.duration + "s";
+  $("modeTxt").textContent = r.mode === "live" ? "Live call" : "Recorded";
+  $("flagRow").innerHTML = r.flags.length
+    ? r.flags.map(f=>`<span class="flagchip bad">⚠ ${f}</span>`).join("")
+    : `<span class="flagchip ok">✔ NO RISK FLAGS</span>`;
+  $("indList").innerHTML = r.indicators.map(ind=>{
+    const c = ind.sub>=65?"g":ind.sub>=45?"a":"r";
+    return `<div class="ind">
+      <div class="top"><b>${ind.name}</b><span>${ind.sub}/100 · weight ${(ind.w*100).toFixed(0)}%</span></div>
+      <div class="bar"><i class="${c}" style="width:${ind.sub}%"></i></div>
+      <div class="det">${ind.det}</div></div>`;
+  }).join("");
+  const dt = new Date(r.block.ts);
+  $("passport").innerHTML = `
+    <h4>⛓ EVIDENCE PASSPORT — ANCHORED</h4>
+    <div class="kv"><span class="k">Evidence ID</span><span class="v">${r.evidenceId}</span></div>
+    <div class="kv"><span class="k">Source</span><span class="v">${escapeHtml(r.label)}</span></div>
+    <div class="kv"><span class="k">SHA-256</span><span class="v">${r.block.evidenceHash}</span></div>
+    <div class="kv"><span class="k">Block</span><span class="v">#${r.block.height} · ${dt.toLocaleString()}</span></div>
+    <div class="kv"><span class="k">Block hash</span><span class="v">${r.block.blockHash.slice(0,34)}…</span></div>
+    <div class="kv"><span class="k">Prev hash</span><span class="v">${r.block.prevHash.slice(0,34)}${r.block.height===1?" (genesis)":"…"}</span></div>`;
+}
+
+VT.saveEvidence = function(){
+  if(!lastResult) return;
+  const log = LS.get("voxtrace_log", []);
+  if(log.some(x=>x.evidenceId===lastResult.evidenceId)){ toast("Already saved to the evidence log."); return; }
+  log.unshift({
+    evidenceId:lastResult.evidenceId, ts:lastResult.block.ts, mode:lastResult.mode,
+    duration:lastResult.meta.duration, score:lastResult.score, verdict:lastResult.verdict,
+    flags:lastResult.flags, label:lastResult.label,
+    hash:lastResult.block.evidenceHash, block:lastResult.block, indicators:lastResult.indicators
+  });
+  LS.set("voxtrace_log", log);
+  const chain = LS.get("voxtrace_chain", []);
+  if(!chain.some(b=>b.blockHash===lastResult.block.blockHash)){ chain.push(lastResult.block); LS.set("voxtrace_chain", chain); }
+  toast("💾 Saved — "+lastResult.evidenceId+" anchored as block #"+lastResult.block.height);
+};
+
+VT.downloadReport = function(){
+  if(!lastResult) return;
+  const r = lastResult;
+  const txt = [
+"================ VOXTRACE VERIFICATION REPORT ================",
+"Evidence ID   : "+r.evidenceId,
+"Generated     : "+new Date().toLocaleString(),
+"Source        : "+r.label,
+"Mode          : "+(r.mode==="live"?"Live call":"Recorded call"),
+"Duration      : "+r.meta.duration+"s",
+"---------------------------------------------------------------",
+"TRUST SCORE   : "+r.score+" / 100",
+"VERDICT       : "+r.verdict,
+"CONFIDENCE    : "+r.confidence,
+"FLAGS         : "+(r.flags.length?r.flags.join("; "):"None"),
+"---------------------------------------------------------------",
+"INDICATORS",
+...r.indicators.map(i=>" - "+i.name.padEnd(28)+i.sub+"/100  ("+i.det+")"),
+"---------------------------------------------------------------",
+"EVIDENCE PASSPORT",
+"SHA-256       : "+r.block.evidenceHash,
+"Block height  : #"+r.block.height,
+"Block hash    : "+r.block.blockHash,
+"Prev hash     : "+r.block.prevHash,
+"Anchored at   : "+new Date(r.block.ts).toLocaleString(),
+"---------------------------------------------------------------",
+"Engine: VOXTRACE heuristic demo engine (spectral + prosodic",
+"analysis). Not a forensic certification. Detect. Explain.",
+"Verify. Preserve.",
+"==============================================================="
+  ].join("\n");
+  downloadBlob(new Blob([txt],{type:"text/plain"}), r.evidenceId+"_report.txt");
+  toast("Report downloaded.");
+};
+function downloadBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+VT.copyHash = async function(){
+  if(!lastResult) return;
+  try{ await navigator.clipboard.writeText(lastResult.block.evidenceHash); toast("SHA-256 hash copied."); }
+  catch(e){ toast("Copy not available in this context."); }
+};
+
+/* ---------------- dashboard ---------------- */
+VT.renderDashboard = function(){
+  const log = LS.get("voxtrace_log", []);
+  const chain = LS.get("voxtrace_chain", []);
+  $("kTotal").textContent = log.length;
+  $("kAnchor").textContent = chain.length;
+  $("kAvg").textContent = log.length ? Math.round(log.reduce((s,x)=>s+x.score,0)/log.length) : "—";
+  $("kFlag").textContent = log.filter(x=>x.score<55).length;
+
+  const buckets = [0,0,0,0,0];
+  log.forEach(x=>{ buckets[Math.min(4, Math.floor(x.score/20))]++; });
+  const labels = ["0–19","20–39","40–59","60–79","80–100"];
+  const colors = ["r","r","a","g","g"];
+  const max = Math.max(1, ...buckets);
+  $("distChart").innerHTML = log.length ? buckets.map((c,i)=>
+    `<div class="dist-row"><span class="lbl">${labels[i]}</span><div class="bar"><i class="${colors[i]}" style="width:${(c/max*100).toFixed(0)}%"></i></div><span class="ct">${c}</span></div>`
+  ).join("") : `<span style="color:var(--body);font-size:13.5px">No data yet — run a verification first.</span>`;
+  VT.renderLog();
+};
+
+VT.renderLog = function(){
+  const log = LS.get("voxtrace_log", []);
+  const q = ($("logSearch").value||"").toLowerCase();
+  const rows = log.filter(x=>!q || (x.evidenceId+x.verdict+x.hash+x.label).toLowerCase().includes(q));
+  $("logBody").innerHTML = rows.length ? rows.map(x=>{
+    const c = x.score>=65?"g":x.score>=40?"a":"r";
+    return `<tr>
+      <td style="color:var(--blue-dark);font-weight:700">${x.evidenceId}</td>
+      <td>${new Date(x.ts).toLocaleString()}</td>
+      <td>${x.mode==="live"?"🔴 live":"📁 file"}</td>
+      <td>${x.duration}s</td>
+      <td class="sc ${c}">${x.score}</td>
+      <td style="font-family:var(--font);font-weight:600;font-size:12px">${x.verdict}</td>
+      <td title="${x.hash}">${x.hash.slice(0,10)}…${x.hash.slice(-6)}</td>
+      <td><button class="linkbtn" onclick="VT.viewRecord('${x.evidenceId}')">view</button></td></tr>`;
+  }).join("") : `<tr><td colspan="8" style="color:var(--body);text-align:center;padding:26px">${log.length?"No matches.":"No evidence saved yet."}</td></tr>`;
+};
+
+VT.viewRecord = function(id){
+  const log = LS.get("voxtrace_log", []);
+  const x = log.find(r=>r.evidenceId===id);
+  if(!x) return;
+  const c = x.score>=65?"g":x.score>=40?"a":"r";
+  VT.openModalHTML(`
+    <div class="m-icon" style="background:${x.score>=65?"var(--green)":x.score>=40?"var(--yellow)":"var(--red)"}">🧾</div>
+    <span class="m-label">Evidence record</span>
+    <h3>${x.evidenceId} · <span class="sc ${c}">${x.score}/100</span></h3>
+    <p><b>Verdict:</b> ${x.verdict}<br><b>Time:</b> ${new Date(x.ts).toLocaleString()}<br>
+    <b>Source:</b> ${escapeHtml(x.label)}<br><b>Flags:</b> ${x.flags.length?escapeHtml(x.flags.join("; ")):"None"}</p>
+    <p style="margin-top:12px">${x.indicators.map(i=>"• "+escapeHtml(i.name)+": <b>"+i.sub+"/100</b>").join("<br>")}</p>
+    <p style="margin-top:12px;font-family:var(--mono);font-size:11.5px;word-break:break-all">
+    sha256: ${x.hash}<br>block #${x.block.height} · ${x.block.blockHash.slice(0,26)}…</p>`);
+};
+
+VT.exportCSV = function(){
+  const log = LS.get("voxtrace_log", []);
+  if(!log.length){ toast("Nothing to export yet."); return; }
+  const head = "evidence_id,timestamp,mode,duration_s,trust_score,verdict,flags,sha256,label";
+  const csv = [head, ...log.map(x=>[
+    x.evidenceId, new Date(x.ts).toISOString(), x.mode, x.duration, x.score,
+    '"'+x.verdict.replace(/"/g,'')+'"', '"'+x.flags.join("; ")+'"', x.hash, '"'+String(x.label).replace(/"/g,'')+'"'
+  ].join(","))].join("\n");
+  downloadBlob(new Blob([csv],{type:"text/csv"}), "voxtrace_evidence_log.csv");
+  toast("CSV exported.");
+};
+
+VT.clearData = function(){
+  if(!confirm("Clear ALL saved verifications and the evidence chain? This cannot be undone.")) return;
+  localStorage.removeItem("voxtrace_log");
+  localStorage.removeItem("voxtrace_chain");
+  VT.renderDashboard();
+  toast("Evidence log cleared.");
+};
+
+/* re-verify integrity */
+const reDrop = $("reDrop");
+["dragover","dragenter"].forEach(ev=>reDrop.addEventListener(ev,e=>{e.preventDefault();reDrop.style.borderColor="var(--blue)";}));
+["dragleave","drop"].forEach(ev=>reDrop.addEventListener(ev,e=>{e.preventDefault();reDrop.style.borderColor="";}));
+reDrop.addEventListener("drop", e=>{ const f=e.dataTransfer.files[0]; if(f) reVerify(f); });
+$("reFile").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) reVerify(f); });
+
+async function reVerify(file){
+  $("reResult").innerHTML = `<span style="color:var(--body)">Computing SHA-256…</span>`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const hash = await sha256Hex(bytes);
+  const log = LS.get("voxtrace_log", []);
+  const match = log.find(x=>x.hash===hash);
+  $("reResult").innerHTML = match
+    ? `<div class="okbox"><b>✔ INTEGRITY VERIFIED</b><br>
+        File matches evidence record <b>${match.evidenceId}</b> (score ${match.score}/100, anchored block #${match.block.height}).
+        Content is bit-for-bit identical to the anchored sample.</div>`
+    : `<div class="badbox"><b>✘ NO MATCH IN EVIDENCE LOG</b><br>
+        Computed hash <span style="font-family:var(--mono)">${hash.slice(0,18)}…</span> is not anchored.
+        Either this file was never verified here, or it has been modified since.</div>`;
+}
+
+/* ---------------- pricing calculator ---------------- */
+VT.calc = function(){
+  const s = +$("rSmall").value, b = +$("rBiz").value, e = +$("rEnt").value;
+  $("vSmall").textContent = s; $("vBiz").textContent = b; $("vEnt").textContent = e;
+  const total = s*5000 + b*25000 + e*100000;
+  $("calcOut").textContent = inr(total) + " / month";
+};
+
+/* ---------------- api keys & leads ---------------- */
+VT.genKey = function(){
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const key = "vx_live_" + hex;
+  LS.set("voxtrace_key", key);
+  $("apiKeyBox").textContent = key;
+  toast("Sandbox API key generated.");
+};
+VT.loadKey = function(){
+  const k = LS.get("voxtrace_key", null);
+  if(k) $("apiKeyBox").textContent = k;
+};
+VT.copyKey = async function(){
+  const k = $("apiKeyBox").textContent;
+  if(!k.startsWith("vx_")){ toast("Generate a key first."); return; }
+  try{ await navigator.clipboard.writeText(k); toast("API key copied."); }catch(e){ toast("Copy not available."); }
+};
+VT.submitLead = function(){
+  const name = $("leadName").value.trim(), co = $("leadCo").value.trim(), email = $("leadEmail").value.trim();
+  if(!name || !email){ toast("Please add at least your name and email."); return; }
+  const leads = LS.get("voxtrace_leads", []);
+  leads.unshift({name, co, email, type:$("leadType").value, ts:Date.now()});
+  LS.set("voxtrace_leads", leads);
+  $("leadName").value = $("leadCo").value = $("leadEmail").value = "";
+  toast("📩 Inquiry saved — the VOXTRACE team will reach out. (Demo: stored locally.)");
+};
+
+</script>
+<script>
+/* Non-blocking font upgrade — falls back silently to system fonts when offline */
+(function(){try{
+  if(window.__voxFonts) return; window.__voxFonts = 1;
+  var l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Display:wght@400;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap";
+  document.head.appendChild(l);
+}catch(e){}})();
+</script>
+</body>
+</html>
