@@ -1499,188 +1499,411 @@ function fftInPlace(re, im){
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   VOXTRACE — Advanced Multi-Stage AI Voice Detection v2.0
+   Pipeline:
+     Stage 0: Silence guard (RMS + Peak)
+     Stage 1: Frame-level feature extraction
+     Stage 2: Audio-type classification (SILENCE/SPEECH/SONG/MUSIC)
+     Stage 3: Early return for non-speech types
+     Stage 4: 8-feature deep AI detection analysis
+     Stage 5: Consensus scoring + verdict
+═══════════════════════════════════════════════════════════════ */
 function analyseBuffer(buffer){
   const sr = buffer.sampleRate;
   let d = buffer.getChannelData(0);
   if(buffer.numberOfChannels > 1){
     const d2 = buffer.getChannelData(1);
     const m = new Float32Array(d.length);
-    for(let i=0;i<d.length;i++) m[i] = 0.5*(d[i]+d2[i]);
+    for(let i=0;i<d.length;i++) m[i]=0.5*(d[i]+d2[i]);
     d = m;
   }
 
-  // ── SILENCE GUARD: compute RMS & peak before anything else ──
-  let sumSq = 0, peak = 0;
-  for(let i = 0; i < d.length; i++){
-    const abs = Math.abs(d[i]);
-    if(abs > peak) peak = abs;
-    sumSq += d[i] * d[i];
-  }
-  const rms = Math.sqrt(sumSq / Math.max(1, d.length));
+  // ─── Math helpers ───
+  const _mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+  const _std  = a => {
+    if(a.length<2) return 0;
+    const m=_mean(a); return Math.sqrt(_mean(a.map(x=>(x-m)*(x-m))));
+  };
+  const _median = a => {
+    if(!a.length) return 0;
+    return [...a].sort((x,y)=>x-y)[a.length>>1];
+  };
+  const _pct = (a,p) => {
+    if(!a.length) return 0;
+    const s=[...a].sort((x,y)=>x-y);
+    return s[Math.floor(p*(s.length-1))];
+  };
+  const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
-  if(rms < 0.008 || peak < 0.025){
+  // ════════════════════════════════════════════════════════════
+  // STAGE 0: SILENCE GUARD
+  // ════════════════════════════════════════════════════════════
+  let sumSq=0, peak=0;
+  for(let i=0;i<d.length;i++){
+    const abs=Math.abs(d[i]);
+    if(abs>peak) peak=abs;
+    sumSq+=d[i]*d[i];
+  }
+  const rms = Math.sqrt(sumSq/Math.max(1,d.length));
+
+  if(rms<0.008 || peak<0.025){
     return {
-      score: 4,
-      verdict: "NO SPEECH DETECTED",
-      vClass: "r",
-      confidence: "HIGH",
-      flags: ["Silent audio or microphone muted", "No speech energy detected", "Cannot perform authenticity analysis"],
-      indicators: [
-        {name:"Pitch Naturalness",          w:.25, sub:0, det:"No audio energy — pitch analysis impossible."},
-        {name:"Temporal Pacing",            w:.20, sub:0, det:"Silent recording — no temporal data."},
-        {name:"Spectral Dynamics",          w:.20, sub:0, det:"No spectral content detected."},
-        {name:"High-Frequency Continuity",  w:.15, sub:0, det:"No audio signal present."},
-        {name:"Breathing & Noise Floor",    w:.20, sub:0, det:"Microphone may be muted or disconnected."}
-      ],
-      meta:{duration:+buffer.duration.toFixed(2), sampleRate:sr, framesAnalysed:0}
+      score:4, verdict:"NO SPEECH DETECTED", vClass:"r", confidence:"HIGH",
+      audioType:"SILENCE",
+      flags:["Silent audio or microphone muted","No audio energy detected","Cannot perform authenticity analysis"],
+      indicators:[{name:"Audio Signal",w:1,sub:0,det:"No audio energy detected — microphone may be muted or file is empty."}],
+      meta:{duration:+buffer.duration.toFixed(2),sampleRate:sr,framesAnalysed:0,audioType:"SILENCE"}
     };
   }
 
-  const FL = 2048, HOP = 1024;
-  const win = new Float32Array(FL);
-  for(let i=0;i<FL;i++) win[i] = 0.5 - 0.5*Math.cos(2*Math.PI*i/(FL-1));
-  const nFrames = Math.max(1, Math.floor((d.length - FL)/HOP));
-  const maxFrames = 420, step = Math.max(1, Math.floor(nFrames/maxFrames));
+  // ════════════════════════════════════════════════════════════
+  // STAGE 1: FRAME-LEVEL FEATURE EXTRACTION
+  // ════════════════════════════════════════════════════════════
+  const FL=2048, HOP=512;
+  const win=new Float32Array(FL);
+  for(let i=0;i<FL;i++) win[i]=0.54-0.46*Math.cos(2*Math.PI*i/(FL-1)); // Hamming
 
-  let energies=[], flats=[], centroids=[], fluxes=[], pitches=[];
-  let prevMag = null;
-  const re = new Float32Array(FL), im = new Float32Array(FL);
-  const nyq = sr/2;
+  const nFrames=Math.max(1,Math.floor((d.length-FL)/HOP));
+  const maxFrames=400, step=Math.max(1,Math.floor(nFrames/maxFrames));
+  const nyq=sr/2;
 
-  for(let f=0; f<nFrames; f+=step){
-    const off = f*HOP;
-    let e = 0;
-    for(let i=0;i<FL;i++){ const v = d[off+i]*win[i]; re[i]=v; im[i]=0; e += v*v; }
-    energies.push(e);
-    if(e < 1e-6){ prevMag = null; continue; }
-    fftInPlace(re, im);
-    const half = FL/2;
-    let magSum=0, logSum=0, cSum=0;
-    const mag = new Float32Array(half);
-    for(let k=1;k<half;k++){
-      const m = Math.sqrt(re[k]*re[k]+im[k]*im[k]);
-      mag[k]=m; magSum+=m; logSum+=Math.log(m+1e-9); cSum+=k*m;
+  let energies=[], flats=[], centroids=[], fluxes=[];
+  let pitches=[], pitchStrengths=[], zcrs=[];
+  let hfEnergies=[], mfEnergies=[], lfEnergies=[];
+  let prevMag=null;
+  const re=new Float32Array(FL), im=new Float32Array(FL);
+
+  for(let f=0;f<nFrames;f+=step){
+    const off=f*HOP;
+    let e=0, zcr=0;
+    for(let i=0;i<FL;i++){
+      const v=d[off+i]*win[i];
+      re[i]=v; im[i]=0; e+=v*v;
+      if(i>0&&(d[off+i]>=0)!==(d[off+i-1]>=0)) zcr++;
     }
-    const geo = Math.exp(logSum/(half-1)), arith = magSum/(half-1)+1e-12;
-    flats.push(Math.min(1, geo/arith));
+    energies.push(e);
+    zcrs.push(zcr/FL);
+    if(e<1e-8){prevMag=null;continue;}
+
+    fftInPlace(re,im);
+    const half=FL/2;
+    let magSum=0,logSum=0,cSum=0,hfE=0,mfE=0,lfE=0;
+    const mag=new Float32Array(half);
+    for(let k=1;k<half;k++){
+      const m=Math.sqrt(re[k]*re[k]+im[k]*im[k]);
+      mag[k]=m; magSum+=m; logSum+=Math.log(m+1e-9); cSum+=k*m;
+      const freq=k*sr/FL;
+      if(freq<500) lfE+=m;
+      else if(freq<3000) mfE+=m;
+      else hfE+=m;
+    }
+    hfEnergies.push(hfE); mfEnergies.push(mfE); lfEnergies.push(lfE);
+    const geo=Math.exp(logSum/(half-1)), arith=magSum/(half-1)+1e-12;
+    flats.push(Math.min(1,geo/arith));
     centroids.push((cSum/(magSum+1e-12))*sr/FL);
     if(prevMag){
-      let fl=0; for(let k=1;k<half;k++){ const dv=mag[k]-prevMag[k]; fl+=dv*dv; }
+      let fl=0; for(let k=1;k<half;k++){const dv=mag[k]-prevMag[k];fl+=dv*dv;}
       fluxes.push(Math.sqrt(fl));
     }
-    prevMag = mag;
-    // pitch via autocorrelation (70–380 Hz)
-    const minLag = Math.floor(sr/380), maxLag = Math.min(Math.floor(sr/70), FL-2);
-    let best=0, bestLag=0;
-    for(let lag=minLag; lag<=maxLag; lag+=2){
-      let c=0, nrm=0;
-      for(let i=0;i<FL-lag;i+=4){ c += re[i]*re[i+lag]; nrm += re[i]*re[i]; }
-      const sc = c/(nrm+1e-9);
-      if(sc>best){ best=sc; bestLag=lag; }
+    prevMag=mag;
+
+    // Normalized autocorrelation pitch (70–800 Hz covers speech + singing)
+    const minLag=Math.floor(sr/800), maxLag=Math.min(Math.floor(sr/70),FL-2);
+    let best=0,bestLag=0;
+    for(let lag=minLag;lag<=maxLag;lag++){
+      let c=0,n1=0,n2=0;
+      for(let i=0;i<FL-lag;i+=4){c+=re[i]*re[i+lag];n1+=re[i]*re[i];n2+=re[i+lag]*re[i+lag];}
+      const sc=c/(Math.sqrt(n1*n2)+1e-9);
+      if(sc>best){best=sc;bestLag=lag;}
     }
-    if(best > 0.35 && bestLag) pitches.push(sr/bestLag);
+    if(best>0.28&&bestLag){pitches.push(sr/bestLag);pitchStrengths.push(best);}
   }
 
-  const mean = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
-  const std  = a => { if(a.length<2) return 0; const m=mean(a); return Math.sqrt(mean(a.map(x=>(x-m)*(x-m)))); };
-  const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const eMean=_mean(energies), eStd=_std(energies);
+  const meanCentroid=_mean(centroids), cStd=_std(centroids);
+  const meanFlat=_mean(flats);
+  const hfMean=_mean(hfEnergies), mfMean=_mean(mfEnergies), lfMean=_mean(lfEnergies);
+  const totalSpecE=hfMean+mfMean+lfMean+1e-12;
 
-  // ── LOW-SPEECH GUARD ──
-  const noSpeech = pitches.length < 6;
+  // ════════════════════════════════════════════════════════════
+  // STAGE 2: AUDIO TYPE CLASSIFICATION
+  // ════════════════════════════════════════════════════════════
+  const activeFrames=energies.filter(e=>e>eMean*0.08).length;
+  const voicedRatio=pitches.length/Math.max(1,activeFrames);
 
-  // 1 — pitch naturalness (CV of f0)
-  let cv = 0;
-  if(pitches.length >= 8){
-    const med = pitches.slice().sort((a,b)=>a-b)[Math.floor(pitches.length/2)];
-    const filt = pitches.filter(p=>p>med*0.55 && p<med*1.7);
-    const m = mean(filt); cv = m ? std(filt)/m : 0;
+  const pitchMed=_median(pitches);
+  const filtPitches=pitches.filter(p=>p>pitchMed*0.5&&p<pitchMed*2.2);
+  const pitchRange=filtPitches.length>3?_pct(filtPitches,0.9)-_pct(filtPitches,0.1):0;
+  const pitchRangeRatio=pitchMed>0?pitchRange/pitchMed:0;
+  const pitchStd=_std(filtPitches);
+  const meanPitchStr=_mean(pitchStrengths);
+  const hfRatio=hfMean/totalSpecE;
+
+  // Singing: large melodic range, strongly voiced, sustained pitches
+  const isSinging=(
+    voicedRatio>0.4 &&
+    pitchRangeRatio>0.28 &&
+    meanPitchStr>0.42 &&
+    pitchMed>80 &&
+    (filtPitches.length>5)
+  );
+
+  // Instrumental: mostly unvoiced, high centroid, little to no sustained pitch
+  const isInstrumental=(
+    voicedRatio<0.18 &&
+    meanCentroid>2800 &&
+    hfRatio>0.12 &&
+    pitches.length<8
+  );
+
+  const hasInsufficientSpeech=pitches.length<6&&!isSinging;
+
+  let audioType;
+  if(isSinging) audioType="SONG";
+  else if(isInstrumental) audioType="MUSIC";
+  else if(hasInsufficientSpeech) audioType="LOW_SPEECH";
+  else audioType="SPEECH";
+
+  // ════════════════════════════════════════════════════════════
+  // STAGE 3: EARLY RETURN FOR NON-ANALYSABLE TYPES
+  // ════════════════════════════════════════════════════════════
+  if(audioType==="MUSIC"){
+    return {
+      score:50,verdict:"MUSIC / INSTRUMENTAL DETECTED",vClass:"a",confidence:"HIGH",
+      audioType:"MUSIC",
+      flags:["Instrumental music or sound effects detected","No sustained human vocals found","Submit a voice recording for AI detection analysis"],
+      indicators:[{name:"Audio Classification",w:1,sub:50,det:`Instrumental/music content detected. Centroid ${Math.round(meanCentroid)} Hz, voiced ratio ${(voicedRatio*100).toFixed(0)}%. No human voice track isolated for AI authenticity analysis.`}],
+      meta:{duration:+buffer.duration.toFixed(2),sampleRate:sr,framesAnalysed:Math.ceil(nFrames/step),audioType:"MUSIC"}
+    };
   }
-  const pitchSub = noSpeech ? 5 : clamp(Math.round(cv*950 + 6), 5, 98);
-  const pitchDet = noSpeech ? "No voiced speech frames detected — ambient noise or silence only." :
-    "Pitch variation (CV) measured at "+(cv*100).toFixed(1)+"% — "+(cv<0.02?"near-constant pitch is a synthetic signature":cv<0.05?"low variability, mildly synthetic-leaning":"healthy natural intonation spread");
-
-  // 2 — temporal pacing
-  const eMean = mean(energies), eStd = std(energies);
-  const dyn = eMean ? eStd/eMean : 0;
-  const voicedThr = eMean*0.25;
-  const pauseRatio = energies.filter(e=>e<voicedThr).length/Math.max(1,energies.length);
-  const pkThr = eMean*0.6, peaks = [];
-  for(let i=1;i<energies.length-1;i++){
-    if(energies[i]>energies[i-1] && energies[i]>energies[i+1] && energies[i]>pkThr) peaks.push(i);
+  if(audioType==="LOW_SPEECH"){
+    return {
+      score:10,verdict:"INSUFFICIENT SPEECH — RESUBMIT",vClass:"r",confidence:"HIGH",
+      audioType:"LOW_SPEECH",
+      flags:["No clear voiced speech detected","Whisper, background noise, or non-speech audio","Speak clearly into the microphone and resubmit"],
+      indicators:[{name:"Speech Presence",w:1,sub:10,det:`Only ${pitches.length} voiced frames found (minimum 6 required). Audio appears to be ambient noise, whisper, or non-speech content.`}],
+      meta:{duration:+buffer.duration.toFixed(2),sampleRate:sr,framesAnalysed:Math.ceil(nFrames/step),audioType:"LOW_SPEECH"}
+    };
   }
-  const merged = [];
-  for(const p of peaks){ if(!merged.length || p-merged[merged.length-1] > 3) merged.push(p); }
-  const iv = [];
-  for(let i=1;i<merged.length;i++) iv.push(merged[i]-merged[i-1]);
-  const ivCV = iv.length>=4 ? std(iv)/mean(iv) : 1;
-  const paceSub = noSpeech ? 5 : clamp(Math.round(dyn*60 + pauseRatio*30 + Math.min(ivCV,1)*45 + 10), 8, 98);
-  const paceDet = noSpeech ? "Insufficient speech to measure pacing." :
-    "Envelope dynamics "+dyn.toFixed(2)+", pause ratio "+(pauseRatio*100).toFixed(0)+"%, rhythm regularity "+(ivCV*100).toFixed(0)+"% — "+(ivCV<0.08?"metronome-perfect periodicity typical of synthetic output":dyn<0.4?"flat pacing":"natural rhythm variation");
 
-  // 3 — spectral dynamics
-  const flStd = std(fluxes), flMean = mean(fluxes), cStd = std(centroids);
-  const fluxNorm = flMean ? flStd/flMean : 0;
-  const specSub = noSpeech ? 8 : clamp(Math.round(fluxNorm*70 + cStd*0.14 + 20), 8, 98);
-  const specDet = noSpeech ? "No speech — spectral dynamics meaningless." :
-    "Spectral flux variability "+fluxNorm.toFixed(2)+", centroid spread "+Math.round(cStd)+" Hz — "+(cStd<120?"timbre suspiciously static":"timbre evolving naturally frame-to-frame");
+  // ════════════════════════════════════════════════════════════
+  // STAGE 4: DEEP AI DETECTION — 8 FEATURES
+  // ════════════════════════════════════════════════════════════
 
-  // 4 — high-frequency continuity
-  const cMean = mean(centroids);
-  const flatMean = mean(flats);
-  const hfPresent = cMean > Math.min(1500, nyq*0.32);
-  const hfSub = noSpeech ? 8 : clamp(Math.round((hfPresent?52:18) + flatMean*40 + (cStd>150?10:0)), 8, 98);
-  const hfDet = noSpeech ? "No speech — HF continuity check skipped." :
-    "Mean spectral centroid "+Math.round(cMean)+" Hz — "+(hfPresent?"upper-band energy intact":"energy concentrated in low band; check for abrupt vocoder roll-off");
+  /* ── Feature 1: PITCH JITTER ─────────────────────────────────
+     Cycle-to-cycle F0 period variation.
+     AI voice:  < 0.2% (unnaturally perfect)
+     Human:       0.4–2.5% (natural micro-variation)
+     AI singing: < 0.3% | Human singing: 0.3–1.5%
+  ──────────────────────────────────────────────────────────── */
+  let jitterPct=0;
+  if(filtPitches.length>=4){
+    const periods=filtPitches.map(p=>1/p);
+    const diffs=[];
+    for(let i=1;i<periods.length;i++) diffs.push(Math.abs(periods[i]-periods[i-1]));
+    const mP=_mean(periods);
+    jitterPct=mP>0?(_mean(diffs)/mP)*100:0;
+  }
+  let jitterSub;
+  if(jitterPct<0.12)       jitterSub=5;   // Robotically perfect — strong AI
+  else if(jitterPct<0.30)  jitterSub=18;  // Below human range — likely AI
+  else if(jitterPct<0.50)  jitterSub=38;  // Borderline
+  else if(jitterPct<2.5)   jitterSub=clamp(Math.round(52+(jitterPct-0.5)*18),52,90);
+  else                     jitterSub=38;  // Too high — distortion
+  const jitterDet=`Pitch jitter ${jitterPct.toFixed(3)}% — ${jitterPct<0.30?"dangerously smooth pitch — strong AI synthesis signature":jitterPct<0.50?"below typical human range — suspect":jitterPct<2.5?"healthy natural pitch micro-variation":"high jitter — possible compression artifacts"}`;
 
-  // 5 — breathing & noise floor
-  const quietBreath = energies.filter(e=>e>eMean*0.02 && e<eMean*0.18).length/Math.max(1,energies.length);
-  const noiseSub = noSpeech ? 8 : clamp(Math.round(quietBreath*260 + (flatMean>0.12?18:6) + 12), 8, 98);
-  const noiseDet = noSpeech ? "Only ambient noise — no breath pattern to analyse." :
-    "Low-energy breath/pause frames at "+(quietBreath*100).toFixed(0)+"% — "+(quietBreath<0.05?"almost no breath or room tone (common in synthetic output)":"natural breath and room-tone present");
+  /* ── Feature 2: AMPLITUDE SHIMMER ───────────────────────────
+     Frame-to-frame RMS variation in voiced regions.
+     AI: < 1% (robotically uniform)    Human: 3–12%
+  ──────────────────────────────────────────────────────────── */
+  const vEnergies=energies.filter(e=>e>eMean*0.12);
+  let shimmerPct=0;
+  if(vEnergies.length>=4){
+    const amps=vEnergies.map(e=>Math.sqrt(e));
+    const ampDiffs=[];
+    for(let i=1;i<amps.length;i++){
+      const avg=(amps[i]+amps[i-1])/2;
+      if(avg>1e-6) ampDiffs.push(Math.abs(amps[i]-amps[i-1])/avg*100);
+    }
+    shimmerPct=_mean(ampDiffs);
+  }
+  let shimmerSub;
+  if(shimmerPct<0.8)       shimmerSub=5;
+  else if(shimmerPct<2.5)  shimmerSub=22;
+  else if(shimmerPct<6.0)  shimmerSub=clamp(Math.round(45+(shimmerPct-2.5)*10),45,85);
+  else if(shimmerPct<18)   shimmerSub=clamp(Math.round(85-(shimmerPct-6)*1.5),50,85);
+  else                     shimmerSub=32;
+  const shimmerDet=`Amplitude shimmer ${shimmerPct.toFixed(1)}% — ${shimmerPct<2.5?"unnaturally uniform amplitude (AI synthesis signature)":shimmerPct<18?"natural human amplitude variation":"excessive variation — possible clipping or distortion"}`;
 
-  const indicators = [
-    {name:"Pitch Naturalness",          w:.25, sub:pitchSub, det:pitchDet},
-    {name:"Temporal Pacing",            w:.20, sub:paceSub,  det:paceDet},
-    {name:"Spectral Dynamics",          w:.20, sub:specSub,  det:specDet},
-    {name:"High-Frequency Continuity",  w:.15, sub:hfSub,    det:hfDet},
-    {name:"Breathing & Noise Floor",    w:.20, sub:noiseSub, det:noiseDet}
-  ];
-  let score = Math.round(clamp(indicators.reduce((s,ind)=>s+ind.sub*ind.w, 0), 2, 99));
+  /* ── Feature 3: SPECTRAL CONSISTENCY ────────────────────────
+     AI voices have a too-stable spectral envelope between frames.
+     Real voices evolve rapidly per phoneme.
+  ──────────────────────────────────────────────────────────── */
+  const flatStd=_std(flats);
+  const centroidCV=meanCentroid>0?cStd/meanCentroid:0;
+  const fluxCV=_mean(fluxes)>0?_std(fluxes)/_mean(fluxes):0;
+  const specConsistSub=clamp(Math.round(flatStd*750+centroidCV*200+fluxCV*35),5,95);
+  const specConsistDet=`Spectral flatness variation ${(flatStd*100).toFixed(1)}%, centroid CV ${(centroidCV*100).toFixed(0)}% — ${specConsistSub<28?"spectrum too static — vocoder/synthesizer pattern detected":specConsistSub<50?"limited spectral dynamics":"rich, naturally evolving spectral content"}`;
 
-  // Hard cap for no-speech audio
-  if(noSpeech) score = Math.min(score, 18);
-
-  const duration = buffer.duration;
-  const v = noSpeech
-    ? {verdict:"INSUFFICIENT SPEECH — RESUBMIT", vClass:"r"}
-    : classify(score);
-  const margin = Math.min(Math.abs(score-75), Math.abs(score-40));
-  const confidence = (duration>=3 && margin>=8) ? "HIGH" : (duration>=1.5 ? "MEDIUM" : "LOW");
-
-  const flags = [];
-  if(noSpeech){
-    flags.push("No human voiced speech detected");
-    flags.push("Recording may be silent, muted, or background noise only");
-    flags.push("Please record yourself speaking clearly and resubmit");
+  /* ── Feature 4: PROSODIC INTONATION ─────────────────────────
+     Natural speech has rise-fall prosodic arcs.
+     AI: monotone OR artificially over-modulated.
+     Songs: melodic contour expected.
+  ──────────────────────────────────────────────────────────── */
+  const pitchCV=filtPitches.length>5?_std(filtPitches)/_mean(filtPitches):0;
+  let intonationSub;
+  if(isSinging){
+    intonationSub=clamp(Math.round(pitchRangeRatio*130+pitchCV*70),15,92);
   } else {
-    if(pitchSub<45) flags.push("Robotic tonal consistency");
-    if(paceSub<45)  flags.push("Unnatural pacing");
-    if(specSub<45)  flags.push("Static timbre");
-    if(hfSub<45)    flags.push("HF band anomaly");
-    if(noiseSub<45) flags.push("No breath / room tone");
+    if(pitchCV<0.03)       intonationSub=10; // Monotone — AI TTS
+    else if(pitchCV<0.07)  intonationSub=28;
+    else if(pitchCV<0.20)  intonationSub=clamp(Math.round(pitchCV*400+12),42,88);
+    else                   intonationSub=clamp(Math.round(88-(pitchCV-0.20)*80),42,88);
   }
+  const intonationDet=isSinging
+    ?`Melodic range ratio ${(pitchRangeRatio*100).toFixed(0)}%, pitch CV ${(pitchCV*100).toFixed(1)}% — ${intonationSub>60?"natural melodic expression":"limited melodic range — possible AI generated music/vocals"}`
+    :`Pitch CV ${(pitchCV*100).toFixed(1)}% — ${pitchCV<0.07?"monotone delivery — classic AI TTS signature":pitchCV<0.20?"natural prosodic variation":"over-expressive — possible AI with exaggerated intonation"}`;
 
-  return {score, verdict:v.verdict, vClass:v.vClass, confidence, flags, indicators,
-          meta:{duration:+duration.toFixed(2), sampleRate:sr, framesAnalysed:Math.ceil(nFrames/step)}};
+  /* ── Feature 5: BREATH & PAUSE NATURALNESS ───────────────────
+     Real humans breathe. AI voices: clean transitions, no breath.
+  ──────────────────────────────────────────────────────────── */
+  const breathFrames=energies.filter(e=>e>eMean*0.02&&e<eMean*0.18).length;
+  const breathRatio=breathFrames/Math.max(1,energies.length);
+  const silentRatio=energies.filter(e=>e<eMean*0.02).length/Math.max(1,energies.length);
+  let breathSub;
+  if(breathRatio<0.02)     breathSub=8;
+  else if(breathRatio<0.05) breathSub=22;
+  else if(breathRatio<0.30) breathSub=clamp(Math.round(breathRatio*220+28+silentRatio*35),35,92);
+  else                     breathSub=clamp(Math.round(92-(breathRatio-0.30)*45),40,92);
+  const breathDet=`Breath/transition frames ${(breathRatio*100).toFixed(0)}%, pause ratio ${(silentRatio*100).toFixed(0)}% — ${breathRatio<0.05?"near-zero breath noise — strong AI signature":breathRatio<0.30?"natural breath and pause pattern":"excessive quiet frames — check for noise padding"}`;
+
+  /* ── Feature 6: HIGH-FREQUENCY NATURALNESS ───────────────────
+     Real speech has fricatives (s, sh, f), consonants, breath.
+     AI: absent HF (vocoder cutoff) or synthetic HF artefacts.
+  ──────────────────────────────────────────────────────────── */
+  const hfVariability=hfMean>0?_std(hfEnergies)/hfMean:0;
+  let hfSub;
+  if(hfRatio<0.03)         hfSub=12; // Near-zero HF — vocoder rolloff
+  else if(hfRatio<0.08)    hfSub=32;
+  else                     hfSub=clamp(Math.round(hfRatio*350+hfVariability*30+18),20,90);
+  const hfDet=`HF energy ratio ${(hfRatio*100).toFixed(1)}%, HF variability ${(hfVariability*100).toFixed(0)}% — ${hfRatio<0.08?"reduced high-frequency content — AI vocoder pattern":hfVariability<0.3?"present but static HF":"natural dynamic high-frequency content"}`;
+
+  /* ── Feature 7: TEMPORAL ENERGY DYNAMICS ─────────────────────
+     Natural speech = variable energy (stressed/unstressed syllables).
+     AI TTS: too-flat energy profile or metronomic rhythm.
+  ──────────────────────────────────────────────────────────── */
+  const dynCoeff=eMean>0?eStd/eMean:0;
+  const sortedE=[...energies].sort((a,b)=>a-b);
+  const topD=_mean(sortedE.slice(Math.floor(sortedE.length*0.9)));
+  const botD=_mean(sortedE.slice(0,Math.max(1,Math.floor(sortedE.length*0.1))));
+  const dynamicRange=topD>0?(topD-botD)/topD:0;
+  let temporalSub;
+  if(dynCoeff<0.25)        temporalSub=12;
+  else if(dynCoeff<0.55)   temporalSub=clamp(Math.round(dynCoeff*100),22,52);
+  else                     temporalSub=clamp(Math.round(48+dynamicRange*48+dynCoeff*12),40,92);
+  const temporalDet=`Energy dynamics CV ${(dynCoeff*100).toFixed(0)}%, dynamic range ${(dynamicRange*100).toFixed(0)}% — ${dynCoeff<0.25?"unnaturally flat energy — AI TTS pattern":dynCoeff<0.55?"moderate energy dynamics":"rich natural speaking energy variation"}`;
+
+  /* ── Feature 8: VOICED/UNVOICED TRANSITIONS ──────────────────
+     Natural speech alternates voiced/unvoiced (v→uv via ZCR).
+     AI: unnaturally uniform ZCR (all voiced or all noise).
+  ──────────────────────────────────────────────────────────── */
+  const zcrMean=_mean(zcrs);
+  const zcrCV=zcrMean>0?_std(zcrs)/zcrMean:0;
+  let voicingSub;
+  if(zcrCV<0.12)           voicingSub=15;
+  else if(zcrCV<0.28)      voicingSub=38;
+  else                     voicingSub=clamp(Math.round(38+zcrCV*155),38,90);
+  const voicingDet=`ZCR variation CV ${(zcrCV*100).toFixed(0)}% — ${zcrCV<0.28?"limited voiced/unvoiced transitions — AI synthesis pattern":"natural voiced-unvoiced alternation"}`;
+
+  // ════════════════════════════════════════════════════════════
+  // STAGE 5: SCORE SYNTHESIS WITH CONTEXTUAL WEIGHTS
+  // ════════════════════════════════════════════════════════════
+  const indicators = isSinging ? [
+    {name:"Vocal Pitch Jitter",             w:0.18, sub:jitterSub,       det:jitterDet},
+    {name:"Amplitude Shimmer",              w:0.15, sub:shimmerSub,      det:shimmerDet},
+    {name:"Spectral Richness & Evolution",  w:0.18, sub:specConsistSub,  det:specConsistDet},
+    {name:"Melodic Intonation Arc",         w:0.16, sub:intonationSub,   det:intonationDet},
+    {name:"Breath Between Phrases",         w:0.14, sub:breathSub,       det:breathDet},
+    {name:"High-Frequency Presence",        w:0.10, sub:hfSub,           det:hfDet},
+    {name:"Vocal Energy Dynamics",          w:0.09, sub:temporalSub,     det:temporalDet},
+  ] : [
+    {name:"Pitch Jitter (Micro-variation)", w:0.18, sub:jitterSub,       det:jitterDet},
+    {name:"Amplitude Shimmer",              w:0.14, sub:shimmerSub,      det:shimmerDet},
+    {name:"Spectral Dynamics & Evolution",  w:0.16, sub:specConsistSub,  det:specConsistDet},
+    {name:"Prosodic Intonation",            w:0.12, sub:intonationSub,   det:intonationDet},
+    {name:"Breath & Pause Naturalness",     w:0.16, sub:breathSub,       det:breathDet},
+    {name:"High-Frequency Continuity",      w:0.10, sub:hfSub,           det:hfDet},
+    {name:"Temporal Energy Dynamics",       w:0.10, sub:temporalSub,     det:temporalDet},
+    {name:"Voiced/Unvoiced Transitions",    w:0.04, sub:voicingSub,      det:voicingDet},
+  ];
+
+  let score=Math.round(clamp(indicators.reduce((s,ind)=>s+ind.sub*ind.w,0),2,99));
+
+  // ── AI Consensus: multiple signals converging → hard penalise ──
+  const aiFlags=[
+    jitterSub<22,      // pitch too smooth
+    shimmerSub<18,     // amplitude too uniform
+    specConsistSub<28, // spectrum static
+    breathSub<18,      // no breath
+    temporalSub<22,    // flat energy
+    intonationSub<18,  // monotone
+    hfSub<20,          // no HF
+  ];
+  const aiCount=aiFlags.filter(Boolean).length;
+  if(aiCount>=5) score=Math.min(score,22);
+  else if(aiCount>=4) score=Math.min(score,35);
+  else if(aiCount>=3) score=Math.min(score,50);
+  else if(aiCount>=2) score=Math.min(score,62);
+
+  // ── Human Consensus: multiple strong signals → minimum floor ──
+  const humanFlags=[
+    jitterSub>65, shimmerSub>60, specConsistSub>60,
+    breathSub>55, temporalSub>58, intonationSub>55
+  ];
+  const humanCount=humanFlags.filter(Boolean).length;
+  if(humanCount>=5) score=Math.max(score,74);
+  else if(humanCount>=4) score=Math.max(score,65);
+
+  const duration=buffer.duration;
+  const v=classify(score);
+  const margin=Math.min(Math.abs(score-75),Math.abs(score-40));
+  const confidence=duration>=4&&margin>=10?"HIGH":duration>=2?"MEDIUM":"LOW";
+
+  const flags=[];
+  if(aiCount>=3) flags.push("⚠️ Multiple strong AI-generation signals detected");
+  if(jitterSub<22) flags.push("Pitch jitter near-zero — synthetic voice signature");
+  if(shimmerSub<18) flags.push("Amplitude robotically uniform — AI indicator");
+  if(specConsistSub<28) flags.push("Spectrum too static — vocoder/synthesizer pattern");
+  if(breathSub<18) flags.push("No breath noise detected between words");
+  if(temporalSub<22) flags.push("Flat energy envelope — AI text-to-speech pattern");
+  if(intonationSub<18) flags.push("Monotone delivery — lacks natural prosody");
+  if(hfSub<20) flags.push("High-frequency content absent — vocoder rolloff");
+  if(isSinging&&intonationSub<35) flags.push("Limited melodic expression — possible AI-generated vocals");
+  if(score>=75&&aiCount===0) flags.push("All authenticity markers within natural human range");
+
+  return {
+    score, verdict:v.verdict, vClass:v.vClass, confidence,
+    audioType,
+    flags, indicators,
+    meta:{
+      duration:+duration.toFixed(2), sampleRate:sr,
+      framesAnalysed:Math.ceil(nFrames/step),
+      audioType, voicedRatio:+voicedRatio.toFixed(2),
+      pitchMedian:Math.round(pitchMed),
+      jitterPct:+jitterPct.toFixed(3),
+      shimmerPct:+shimmerPct.toFixed(1),
+      aiSignals:aiCount
+    }
+  };
 }
+
 function classify(score){
-  if(score>=75) return {verdict:"LIKELY GENUINE", vClass:"g"};
+  if(score>=75) return {verdict:"LIKELY GENUINE",       vClass:"g"};
   if(score>=55) return {verdict:"PROBABLY GENUINE — MONITOR", vClass:"g"};
   if(score>=40) return {verdict:"SUSPICIOUS — REVIEW REQUIRED", vClass:"a"};
-  return {verdict:"LIKELY AI-GENERATED", vClass:"r"};
+  return          {verdict:"LIKELY AI-GENERATED",        vClass:"r"};
 }
-
-/* ---------------- analysis run & evidence ---------------- */
 let lastResult = null;
 
 VT.analyze = async function(){
@@ -1691,10 +1914,12 @@ VT.analyze = async function(){
     const {bytes, buffer, label, mode} = pendingAudio;
     const res = analyseBuffer(buffer);
     const hash = await sha256Hex(bytes);
-    // deterministic micro-adjustment from content hash (evidence-consistent scoring)
-    const adj = (parseInt(hash.slice(0,2),16) % 3) - 1;
-    res.score = Math.max(2, Math.min(99, res.score + adj));
-    const c = classify(res.score); res.verdict = c.verdict; res.vClass = c.vClass;
+    // Only apply hash micro-adjustment for normal SPEECH/SONG analysis
+    if(!['SILENCE','MUSIC','LOW_SPEECH'].includes(res.audioType)){
+      const adj = (parseInt(hash.slice(0,2),16) % 3) - 1;
+      res.score = Math.max(2, Math.min(99, res.score + adj));
+      const c = classify(res.score); res.verdict = c.verdict; res.vClass = c.vClass;
+    }
 
     const chain = LS.get("voxtrace_chain", []);
     const prev = chain.length ? chain[chain.length-1] : null;
