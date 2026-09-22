@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VOXTRACE — System Architecture & Working Manual</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 9pt;
+      color: #70757a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    @bottom-left {
+      content: "VOXTRACE · AI Trust Infrastructure";
+      font-size: 9pt;
+      color: #70757a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #202124;
+    line-height: 1.55;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+
+  /* Header / Brand */
+  .brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #4285F4;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .logo-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 24pt;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .logo-icon {
+    width: 38px;
+    height: 38px;
+    background: #4285F4;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
+  .logo-text {
+    color: #121317;
+  }
+  .logo-accent {
+    color: #4285F4;
+  }
+  .doc-meta {
+    text-align: right;
+    font-size: 8.5pt;
+    color: #5f6368;
+    line-height: 1.4;
+  }
+
+  /* Cover elements */
+  .hero-title {
+    font-size: 28pt;
+    font-weight: 800;
+    color: #121317;
+    margin: 20px 0 8px 0;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .hero-sub {
+    font-size: 13pt;
+    color: #4285F4;
+    font-weight: 600;
+    margin-bottom: 25px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-blue { background: #E8F0FE; color: #1a73e8; }
+  .badge-green { background: #E6F4EA; color: #137333; }
+  .badge-red { background: #FCE8E6; color: #C5221F; }
+  .badge-amber { background: #FEF7E0; color: #B06000; }
+
+  /* Sections */
+  h1 {
+    font-size: 18pt;
+    font-weight: 800;
+    color: #121317;
+    border-bottom: 1px solid #dadce0;
+    padding-bottom: 6px;
+    margin-top: 26px;
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a73e8;
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #202124;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+
+  /* Cards & Callouts */
+  .card {
+    background: #F8F9FA;
+    border: 1px solid #E8EAED;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .callout-blue {
+    background: #F1F6FE;
+    border-left: 4px solid #4285F4;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 10pt;
+  }
+  .callout-green {
+    background: #F0FDF4;
+    border-left: 4px solid #34A853;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 10pt;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px 0;
+    font-size: 9.5pt;
+  }
+  th {
+    background: #F1F3F4;
+    color: #202124;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid #BDC1C6;
+  }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #E8EAED;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background: #FAFAFA;
+  }
+
+  /* Flow Diagram */
+  .pipeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    background: #fff;
+    border: 1px solid #E8EAED;
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .step-num {
+    background: #4285F4;
+    color: #fff;
+    font-weight: 800;
+    font-size: 10pt;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content {
+    flex: 1;
+  }
+  .step-title {
+    font-weight: 700;
+    color: #121317;
+    margin-bottom: 2px;
+  }
+  .step-desc {
+    font-size: 9pt;
+    color: #5f6368;
+    line-height: 1.4;
+  }
+
+  code {
+    background: #F1F3F4;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 9pt;
+    color: #d93025;
+  }
+
+  .formula-box {
+    background: #202124;
+    color: #8ab4f8;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 9pt;
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="brand-header">
+    <div class="logo-box">
+      <div class="logo-icon">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="logo-text">VOX<span class="logo-accent">TRACE</span></span>
+    </div>
+    <div class="doc-meta">
+      <b>Comprehensive Engineering Manual</b><br>
+      System Architecture &amp; Detection Engine v2.0<br>
+      Date: September 2026 · Release: Production
+    </div>
+  </div>
+
+  <div class="hero-title">AI Voice Detection &amp; Cryptographic Evidence Infrastructure</div>
+  <div class="hero-sub">Complete Technical Architecture, DSP Feature Extraction &amp; Decision Science</div>
+
+  <div class="callout-blue">
+    <b>Executive Summary:</b> <b>VOXTRACE</b> is an enterprise-grade cybersecurity and digital authenticity platform designed to protect financial institutions, executive communication, call centers, and media platforms against real-time AI voice cloning and deepfake fraud. This document provides a complete mathematical, architectural, and operational explanation of how VOXTRACE captures, cleans, analyzes, ranks, and immutably anchors voice recordings.
+  </div>
+
+  <h1>1. System Overview &amp; Threat Model</h1>
+  <p>
+    Modern generative speech synthesis (such as ElevenLabs, VALL-E, OpenVoice, Bark, and Real-time Voice Conversion / RVC) utilizes neural vocoders and diffusion models to reconstruct human speech from reference audio clips as short as 3 seconds. Attackers weaponize these models to execute <b>CEO Fraud / Business Email Compromise (BEC)</b>, family emergency impersonations, KYC/biometric bypass, and disinformation campaigns.
+  </p>
+  <p>
+    Traditional audio filters and generic machine learning models suffer from severe false-positive rates when encountering background noise, compressed cellular codecs (e.g., AMR, AWB), singing, or muffled speech. VOXTRACE solves this through a deterministic <b>5-Stage Acoustic &amp; Digital Signal Processing (DSP) Pipeline</b> paired with an <b>8-Factor Biological Voice Marker Consensus Engine</b>.
+  </p>
+
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:6px;color:#121317;">The 4 Core Pillars of VOXTRACE:</div>
+    <ul style="margin:0;padding-left:18px;font-size:9.5pt;line-height:1.6;">
+      <li><b>Detect:</b> Multi-stage audio feature extraction evaluating biological vocal tract dynamics and vocoder artifacts.</li>
+      <li><b>Explain:</b> Every decision is broken down into sub-indicators (Jitter, Shimmer, Intonation, Breath, Spectrum) so analysts know <i>why</i> a sample is flagged.</li>
+      <li><b>Verify:</b> Deterministic scoring calibrated across speech, song, and compressed codecs with instant verification.</li>
+      <li><b>Preserve:</b> Generates a cryptographic SHA-256 Evidence Passport anchored in a tamper-evident audit log.</li>
+    </ul>
+  </div>
+
+  <h1>2. Universal Audio Intake &amp; Transcoding</h1>
+  <p>
+    Voice traffic originates from diverse environments: phone calls (AMR-NB / AMR-WB), WhatsApp voice notes (Opus), call center recordings (WAV / MP3), and browser mics (WebM). Standard browser Web Audio API fails when decoding cellular formats like <code>.amr</code> or <code>.awb</code>.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Audio Codec / Ext</th>
+        <th>Sample Rate</th>
+        <th>Source Environment</th>
+        <th>Intake &amp; Transcoding Path</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>.WAV / .MP3 / .M4A</b></td>
+        <td>16 kHz – 48 kHz</td>
+        <td>Studio / PC / Call Center</td>
+        <td>Native Web Audio <code>AudioContext.decodeAudioData</code> (0ms overhead)</td>
+      </tr>
+      <tr>
+        <td><b>.AMR (AMR-NB)</b></td>
+        <td>8,000 Hz</td>
+        <td>2G/3G Cellular &amp; WhatsApp</td>
+        <td>Auto-transcoded via <code>/api/audio/convert</code> (FFmpeg PCM 16kHz)</td>
+      </tr>
+      <tr>
+        <td><b>.AWB (AMR-WB)</b></td>
+        <td>16,000 Hz</td>
+        <td>VoLTE HD Voice Phone Calls</td>
+        <td>Auto-transcoded via <code>/api/audio/convert</code> (FFmpeg PCM 16kHz)</td>
+      </tr>
+      <tr>
+        <td><b>.3GP / .3GPP</b></td>
+        <td>8 – 16 kHz</td>
+        <td>Mobile Call Recorders</td>
+        <td>Auto-transcoded via <code>/api/audio/convert</code> (FFmpeg PCM 16kHz)</td>
+      </tr>
+      <tr>
+        <td><b>WebRTC / Mic Live</b></td>
+        <td>44.1 / 48 kHz</td>
+        <td>Live In-Browser Verification</td>
+        <td>Captured via <code>navigator.mediaDevices.getUserMedia</code> + Canvas Visualizer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page-break"></div>
+
+  <div class="brand-header">
+    <div class="logo-box">
+      <span class="logo-text">VOX<span class="logo-accent">TRACE</span></span>
+    </div>
+    <div class="doc-meta">Section 3: End-to-End Analysis Pipeline</div>
+  </div>
+
+  <h1>3. The 5-Stage Analysis Pipeline</h1>
+  <p>
+    When an audio stream or file enters the engine, it undergoes sequential filtration, decomposition, and contextual evaluation. No single heuristic makes the final determination; instead, decisions emerge from multi-dimensional consensus.
+  </p>
+
+  <div class="pipeline-step">
+    <div class="step-num">0</div>
+    <div class="step-content">
+      <div class="step-title">Stage 0: Silence &amp; Energy Guard (Anti-False-Positive Filter)</div>
+      <div class="step-desc">
+        Computes Root-Mean-Square (RMS) energy and Peak Amplitude across all PCM samples. If <code>RMS &lt; 0.008</code> or <code>Peak &lt; 0.025</code>, the audio is rejected immediately with a score of <b>4/100</b> and verdict <code>"NO SPEECH DETECTED"</code>. This prevents ambient noise or muted microphones from receiving artificial high scores.
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Stage 1: Frame-Level DSP &amp; Spectral Feature Extraction</div>
+      <div class="step-desc">
+        Segments audio into 2048-sample frames with a 512-sample hop (75% overlap) shaped by a <b>Hamming Window</b>: <code>w[i] = 0.54 - 0.46·cos(2πi / (FL-1))</code>. Computes Fast Fourier Transform (FFT), sub-band energies (Low: &lt;500Hz, Mid: 500-3000Hz, High: &gt;3000Hz), Spectral Centroid, Spectral Flatness, and Zero Crossing Rate (ZCR).
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Stage 2: Audio Context &amp; Type Classification</div>
+      <div class="step-desc">
+        Examines pitch span, voiced ratio, and centroid spread to determine the operational context:
+        <br>• <b>SPEECH:</b> Conversational human speech (evaluates prosody and speech naturalness).
+        <br>• <b>SONG:</b> Singing vocals with wide melodic ranges (shifts to singing-specific weights).
+        <br>• <b>MUSIC:</b> Pure instrumental content (returns neutral 50/100 without false AI accusation).
+        <br>• <b>LOW_SPEECH:</b> Whispers or clicks without sustained voice (flags "INSUFFICIENT SPEECH").
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Stage 3: 8-Factor Deep Acoustic Extraction</div>
+      <div class="step-desc">
+        Evaluates 8 distinct biological vocal tract markers against synthetic neural vocoder signatures. Cycle-to-cycle pitch periods, amplitude modulation, phoneme evolution, and pulmonary breath transitions are quantified into calibrated sub-scores (0 to 100).
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <div class="step-title">Stage 4: Consensus Scoring &amp; Tamper-Proof Anchoring</div>
+      <div class="step-desc">
+        Aggregates weighted indicator sub-scores. Applies <b>AI Consensus Penalties</b> (if ≥4 indicators flag synthetic patterns, score is hard-capped &lt;35) or <b>Human Floor Bonuses</b> (if ≥5 markers demonstrate biological complexity, score is protected ≥74). Anchors results with SHA-256 hashes into the immutable ledger.
+      </div>
+    </div>
+  </div>
+
+  <h1>4. Mathematical Foundations of Audio Extraction</h1>
+  <div class="card">
+    <div style="font-weight:700;color:#1a73e8;margin-bottom:4px;">A. Normalized Autocorrelation Pitch Extraction (F0)</div>
+    <div style="font-size:9pt;margin-bottom:6px;">Calculated over lags corresponding to 70 Hz to 800 Hz to cover both deep bass male speech and high soprano singing:</div>
+    <div class="formula-box">r(lag) = Σ [x(i) · x(i+lag)] / sqrt( Σ [x(i)]² · Σ [x(i+lag)]² )</div>
+
+    <div style="font-weight:700;color:#1a73e8;margin-top:10px;margin-bottom:4px;">B. Spectral Flatness (Wiener Entropy)</div>
+    <div style="font-size:9pt;margin-bottom:6px;">Measures whether energy is concentrated in tonal harmonics (human) or white/diffused vocoder noise (synthetic):</div>
+    <div class="formula-box">Flatness = exp( (1/N) · Σ ln(m_k) ) / ( (1/N) · Σ m_k )</div>
+
+    <div style="font-weight:700;color:#1a73e8;margin-top:10px;margin-bottom:4px;">C. Spectral Centroid (Timbral Brightness)</div>
+    <div style="font-size:9pt;margin-bottom:6px;">Center of mass of the frequency spectrum:</div>
+    <div class="formula-box">Centroid = ( Σ [k · m_k] / Σ m_k ) · (SampleRate / FrameLength)</div>
+  </div>
+
+  <!-- ==================== PAGE 3 ==================== -->
+  <div class="page-break"></div>
+
+  <div class="brand-header">
+    <div class="logo-box">
+      <span class="logo-text">VOX<span class="logo-accent">TRACE</span></span>
+    </div>
+    <div class="doc-meta">Section 5: The 8 Biological Acoustic Markers</div>
+  </div>
+
+  <h1>5. The 8 Biological Voice Markers (AI vs Human)</h1>
+  <p>
+    Human vocal production requires coordinated interaction between the lungs (airflow), vocal folds (laryngeal vibration), and vocal tract articulators (tongue, lips, velum). Neural vocoders generate audio by predicting waveform chunks or spectrogram inversions, leaving distinct mathematical artifacts.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%;">Marker</th>
+        <th style="width:38%;">Biological Mechanism (Human 🟢)</th>
+        <th style="width:40%;">Synthetic Signature (AI Clone 🔴)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>1. Pitch Jitter (Cycle-to-Cycle F0)</b></td>
+        <td>Vocal cords cannot sustain mathematically invariant vibration. Micro-muscle tremors cause natural cycle variation of <b>0.4% to 2.5%</b>.</td>
+        <td>AI vocoders produce unnaturally smooth, stable pitch tracks with jitter <b>&lt; 0.2%</b> (robotic consistency).</td>
+      </tr>
+      <tr>
+        <td><b>2. Amplitude Shimmer</b></td>
+        <td>Subglottal pressure naturally fluctuates between vocal fold opening cycles, producing <b>3% to 12%</b> shimmer.</td>
+        <td>Diffusion/autoregressive speech outputs have uniform energy profiles with shimmer <b>&lt; 1%</b>.</td>
+      </tr>
+      <tr>
+        <td><b>3. Spectral Dynamics &amp; Evolution</b></td>
+        <td>Every phoneme transition reconfigures oral cavity shape, generating continuous spectral centroid and flux variation.</td>
+        <td>Spectrograms exhibit static formant lines and repetitive spectral flatness typical of vocoder frame concatenation.</td>
+      </tr>
+      <tr>
+        <td><b>4. Prosodic Intonation Arc</b></td>
+        <td>Speech carries emotional, semantic, and question/statement pitch contours (pitch CV typically 7% to 20%).</td>
+        <td>Either monotone flat delivery (pitch CV &lt; 3%) or exaggerated, repetitive sinusoidal intonation arcs.</td>
+      </tr>
+      <tr>
+        <td><b>5. Breath &amp; Pause Acoustics</b></td>
+        <td>Humans must inhale. Shabdon ke beech inhalation noise (15-25 dB lower than voice) and room reflections exist.</td>
+        <td>Digital silence or abrupt gate cuts between words; zero inhalation sounds detected.</td>
+      </tr>
+      <tr>
+        <td><b>6. High-Frequency Continuity</b></td>
+        <td>Fricatives (<code>s</code>, <code>sh</code>, <code>f</code>) create turbulent air noise extending smoothly into the 8 kHz – 16 kHz band.</td>
+        <td>Abrupt frequency roll-off above 4kHz/8kHz due to neural vocoder downsampling or synthetic metallic high-frequency haze.</td>
+      </tr>
+      <tr>
+        <td><b>7. Temporal Energy Dynamics</b></td>
+        <td>Natural speech alternates strongly between stressed (accented) and unstressed syllables across sentences.</td>
+        <td>Metronome-like regularity or flat energy envelopes typical of sentence-level neural text-to-speech.</td>
+      </tr>
+      <tr>
+        <td><b>8. Voiced / Unvoiced Transitions</b></td>
+        <td>Zero Crossing Rate (ZCR) shifts rapidly as speech moves from periodic vowels (low ZCR) to aperiodic consonants (high ZCR).</td>
+        <td>ZCR remains suspiciously uniform across transitions, failing to model turbulent oral airflow correctly.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Weight Allocation in Final Trust Score Calculation</h2>
+  <div style="display:flex;gap:14px;margin-top:10px;">
+    <div class="card" style="flex:1;">
+      <div style="font-weight:700;color:#121317;margin-bottom:4px;">Speech Mode Weights:</div>
+      <ul style="margin:0;padding-left:16px;font-size:9pt;line-height:1.5;">
+        <li><b>Pitch Jitter:</b> 18%</li>
+        <li><b>Breath &amp; Pauses:</b> 16%</li>
+        <li><b>Spectral Evolution:</b> 16%</li>
+        <li><b>Amplitude Shimmer:</b> 14%</li>
+        <li><b>Prosodic Intonation:</b> 12%</li>
+        <li><b>High-Frequency Continuity:</b> 10%</li>
+        <li><b>Temporal Dynamics:</b> 10%</li>
+        <li><b>ZCR Transitions:</b> 4%</li>
+      </ul>
+    </div>
+    <div class="card" style="flex:1;">
+      <div style="font-weight:700;color:#121317;margin-bottom:4px;">Song / Singing Mode Weights:</div>
+      <ul style="margin:0;padding-left:16px;font-size:9pt;line-height:1.5;">
+        <li><b>Vocal Pitch Jitter:</b> 18%</li>
+        <li><b>Spectral Richness:</b> 18%</li>
+        <li><b>Melodic Intonation Arc:</b> 16%</li>
+        <li><b>Amplitude Shimmer:</b> 15%</li>
+        <li><b>Breath Between Phrases:</b> 14%</li>
+        <li><b>High-Frequency Presence:</b> 10%</li>
+        <li><b>Vocal Dynamics:</b> 9%</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 4 ==================== -->
+  <div class="page-break"></div>
+
+  <div class="brand-header">
+    <div class="logo-box">
+      <span class="logo-text">VOX<span class="logo-accent">TRACE</span></span>
+    </div>
+    <div class="doc-meta">Section 6 &amp; 7: Scoring Logic &amp; Evidence Security</div>
+  </div>
+
+  <h1>6. Multi-Factor Consensus &amp; Verdict Classification</h1>
+  <p>
+    A simple weighted average is insufficient for forensic cybersecurity because an advanced clone might fool 2 markers while failing miserably on 3 others. VOXTRACE implements a <b>Non-Linear Consensus Engine</b>:
+  </p>
+
+  <div class="callout-blue">
+    <b>AI Consensus Rule (Hard Penalty Capping):</b>
+    <br>If <b>5 or more</b> AI signals trigger: Trust Score is hard-capped at <b>≤ 22</b> (<code>LIKELY AI-GENERATED</code>).
+    <br>If <b>4 AI signals</b> trigger: Trust Score is hard-capped at <b>≤ 35</b>.
+    <br>If <b>3 AI signals</b> trigger: Trust Score is capped at <b>≤ 50</b> (<code>SUSPICIOUS</code>).
+  </div>
+
+  <div class="callout-green">
+    <b>Human Consensus Rule (False-Positive Protection):</b>
+    <br>If <b>5 or more</b> biological markers show strong human complexity (natural jitter, healthy shimmer, breath transitions), the Trust Score is protected with a floor of <b>≥ 74</b> (<code>LIKELY GENUINE</code>), even if minor background noise distorted one metric.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Trust Score</th>
+        <th>Verdict</th>
+        <th>Risk Level</th>
+        <th>Operational Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>75 – 99</b></td>
+        <td><span class="badge badge-green">LIKELY GENUINE</span></td>
+        <td>Low Risk</td>
+        <td>Approved for execution, verification passport issued.</td>
+      </tr>
+      <tr>
+        <td><b>55 – 74</b></td>
+        <td><span class="badge badge-green">PROBABLY GENUINE — MONITOR</span></td>
+        <td>Moderate</td>
+        <td>Acceptable for standard operations; flag for continuous monitoring.</td>
+      </tr>
+      <tr>
+        <td><b>40 – 54</b></td>
+        <td><span class="badge badge-amber">SUSPICIOUS — REVIEW REQUIRED</span></td>
+        <td>High</td>
+        <td>Hold transaction/action. Secondary verification step required.</td>
+      </tr>
+      <tr>
+        <td><b>02 – 39</b></td>
+        <td><span class="badge badge-red">LIKELY AI-GENERATED</span></td>
+        <td>Critical</td>
+        <td>Immediate block. Voice clone attack logged; forensic evidence preserved.</td>
+      </tr>
+      <tr>
+        <td><b>Special</b></td>
+        <td><span class="badge badge-red">NO SPEECH / SILENCE</span></td>
+        <td>Invalid</td>
+        <td>Audio energy below threshold. User prompted to speak clearly.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1>7. Cryptographic Evidence Passport &amp; Blockchain Proof</h1>
+  <p>
+    Detecting a deepfake is only half the battle; organizations must present legally defensible, tamper-evident proof to compliance officers, law enforcement, and insurance underwriters. VOXTRACE issues an <b>Evidence Passport</b> for every verification.
+  </p>
+
+  <div class="card">
+    <div style="font-weight:700;color:#121317;margin-bottom:6px;">Evidence Passport Structure:</div>
+    <ul style="margin:0;padding-left:18px;font-size:9pt;line-height:1.6;">
+      <li><b>Evidence ID:</b> Deterministic identifier (e.g. <code>VT-260923-9F4B</code>) derived from date and hash.</li>
+      <li><b>SHA-256 Content Hash:</b> Exact cryptographic digest of the raw audio bytes (verified byte-for-byte).</li>
+      <li><b>Block &amp; Merkle Link:</b> Linked to previous verification block using cryptographic chaining (<code>prevHash + evidenceHash + timestamp</code>).</li>
+      <li><b>Tamper-Proof Verification:</b> If anyone modifies a single millisecond of the audio recording later, re-computing the SHA-256 fails instantly against the Evidence Passport.</li>
+    </ul>
+  </div>
+
+  <h1>8. Production Integration &amp; API Usage</h1>
+  <p>VOXTRACE integrates seamlessly into enterprise voice pipelines:</p>
+  <div class="formula-box">
+curl -X POST https://voxtrace.vercel.app/api/verify \
+  -H "Authorization: Bearer vt_live_sec_key" \
+  -F "audio=@call_recording.awb"
+  </div>
+  <p style="font-size:9pt;color:#5f6368;margin-top:4px;">
+    Returns JSON response containing <code>trustScore</code>, <code>verdict</code>, <code>audioType</code>, <code>indicators</code> breakdown, and <code>evidencePassport</code>.
+  </p>
+
+</body>
+</html>
