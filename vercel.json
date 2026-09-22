@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/payment/config",
+      "destination": "/api/payment/config.js"
+    },
+    {
+      "source": "/api/payment/create-order",
+      "destination": "/api/payment/create-order.js"
+    },
+    {
+      "source": "/api/payment/verify",
+      "destination": "/api/payment/verify.js"
+    }
+  ]
+}
