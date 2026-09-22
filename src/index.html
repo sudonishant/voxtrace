@@ -9,6 +9,7 @@
 <meta property="og:description" content="AI Trust Infrastructure for Voice & Digital Evidence. Detect deepfake calls, explain risk, anchor evidence.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234285F4'/%3E%3Cpath d='M14 32h6l4-12 6 24 5-16 3 4h12' stroke='%23fff' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
 /*STYLE*/
 </style>
@@ -55,6 +56,7 @@
       <li><a href="#/api" data-nav="api">API &amp; Partners</a></li>
       <li><a href="#/dashboard" data-nav="dashboard">Dashboard</a></li>
       <li><a href="#/verify" class="btn-verify" data-nav="verify">Verify a voice →</a></li>
+      <li><span id="userPlanBadge" class="plan-pill-badge" style="display:none"></span></li>
     </ul>
   </div>
 </header>
@@ -280,22 +282,34 @@
           <tr>
             <td><b>Free Trial</b><span class="ribbon" style="background:#0F9D58">Always Free</span><span class="mini">Individuals &amp; test users</span></td>
             <td>3 voice verifications / month · Web console · Instant Trust Score · Evidence Passport preview · No credit card required</td>
-            <td><b>₹0</b><span class="mini">3 free checks / mo</span></td>
+            <td>
+              <div><b>₹0</b><span class="mini">3 free checks / mo</span></div>
+              <button type="button" class="plan-act-btn btn-plan-trial" onclick="VT.selectFreeTrial()">Start Free</button>
+            </td>
           </tr>
           <tr>
             <td><b>Normal / Personal</b><span class="ribbon" style="background:#FBBC04;color:#202124">Launch: ₹199</span><span class="mini">Professionals &amp; job seekers</span></td>
             <td>50 verifications / month · Full Trust Score breakdown · Audio spectral check · Priority processing · Evidence reports</td>
-            <td><b>₹199</b> <span class="mini" style="text-decoration:line-through;color:var(--body);opacity:0.7">₹499</span><span class="mini">Introductory pricing</span></td>
+            <td>
+              <div><b>₹199</b> <span class="mini" style="text-decoration:line-through;color:var(--body);opacity:0.7">₹499</span><span class="mini">Introductory pricing</span></div>
+              <button type="button" class="plan-act-btn btn-plan-pay" onclick="VT.payForPlan('Normal / Personal', 199)">⚡ Subscribe ₹199</button>
+            </td>
           </tr>
           <tr>
             <td><b>Business</b><span class="ribbon">Most popular</span><span class="mini">Fintechs, BPOs, HR platforms</span></td>
             <td>1,000 verifications / month + Full API access · Team dashboard · Live-call stream integration · Audit logs &amp; exports · Add-on verifications supported</td>
-            <td><b>₹1,999</b></td>
+            <td>
+              <div><b>₹1,999</b><span class="mini">per month</span></div>
+              <button type="button" class="plan-act-btn btn-plan-pay" onclick="VT.payForPlan('Business', 1999)">⚡ Subscribe ₹1,999</button>
+            </td>
           </tr>
           <tr>
             <td><b>Enterprise &amp; Add-ons</b><span class="mini">Banks &amp; high-volume clients</span></td>
             <td>Custom volume + SLA uptime · On-prem / VPC deployment · White-label licensing · Dedicated support · Add-ons @ ₹1.5/call beyond quota</td>
-            <td><b>Custom / ₹25,000+</b></td>
+            <td>
+              <div><b>Custom / ₹25,000+</b></div>
+              <button type="button" class="plan-act-btn btn-plan-contact" onclick="VT.contactEnterprise()">Contact Sales</button>
+            </td>
           </tr>
           <tr class="total">
             <td>Flexible Hybrid Model</td>
@@ -657,6 +671,26 @@
 <script>
 /*SCRIPT*/
 </script>
+<!-- Payment Success & Verification Modal -->
+<div id="paymentSuccessModal" class="payment-modal-overlay" style="display:none" role="dialog" aria-modal="true">
+  <div class="payment-modal-card">
+    <div class="payment-modal-icon">✔</div>
+    <h3 style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:6px">Payment Verified &amp; Active!</h3>
+    <p style="color:var(--body);font-size:14px">Your VOXTRACE subscription has been cryptographically confirmed on our secure server.</p>
+    
+    <div class="payment-receipt-box">
+      <div><span class="k">Plan:</span> <b id="modalPlanName">Normal / Personal</b></div>
+      <div><span class="k">Amount:</span> <b id="modalAmount">₹199 / month</b></div>
+      <div><span class="k">Payment ID:</span> <span id="modalPayId">pay_xxxx</span></div>
+      <div><span class="k">Order ID:</span> <span id="modalOrderId">order_xxxx</span></div>
+      <div><span class="k">HMAC SHA-256:</span> <span id="modalSigHash">Verified</span></div>
+      <div style="margin-top:4px;color:#137333;font-weight:700">Status: Genuine &amp; Tamper-evident ✓</div>
+    </div>
+
+    <button type="button" class="plan-act-btn btn-plan-pay" style="width:100%;padding:12px 20px;font-size:15px" onclick="VT.closePaymentModal()">Start Verifying Voices →</button>
+  </div>
+</div>
+
 <script>
 /* Non-blocking font upgrade — falls back silently to system fonts when offline */
 (function(){try{

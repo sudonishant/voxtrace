@@ -59,6 +59,7 @@ function boot(){
   }catch(e){}
   try{ drawHeroWave(); }catch(e){}
   try{ VT.calc(); }catch(e){}
+  try{ VT.updatePlanBanner(); }catch(e){}
 }
 // boot as soon as DOM is ready — never wait on images/fonts/network for first paint
 if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
@@ -740,4 +741,160 @@ VT.submitLead = function(){
   LS.set("voxtrace_leads", leads);
   $("leadName").value = $("leadCo").value = $("leadEmail").value = "";
   toast("📩 Inquiry saved — the VOXTRACE team will reach out. (Demo: stored locally.)");
+};
+
+/* ---------------- razorpay payments & subscriptions ---------------- */
+VT.updatePlanBanner = function(){
+  const plan = LS.get("voxtrace_active_plan", null);
+  const badge = $("userPlanBadge");
+  if(!badge) return;
+  if(plan && plan.name){
+    badge.style.display = "inline-flex";
+    if(plan.name === "Free Trial"){
+      badge.innerHTML = `🎁 Free Trial (${plan.checksLeft || 3} left)`;
+      badge.style.background = "#e8f0fe";
+      badge.style.color = "#1a73e8";
+      badge.style.borderColor = "#d2e3fc";
+    } else {
+      badge.innerHTML = `⚡ ${plan.name} Active`;
+      badge.style.background = "#e6f4ea";
+      badge.style.color = "#137333";
+      badge.style.borderColor = "#ceead6";
+    }
+  } else {
+    badge.style.display = "none";
+  }
+};
+
+VT.selectFreeTrial = function(){
+  const current = LS.get("voxtrace_active_plan", null);
+  if(current && current.name === "Free Trial"){
+    toast("✓ Free Trial already active! (3 checks / month)");
+    location.hash = "#/verify";
+    return;
+  }
+  const trialPlan = {
+    name: "Free Trial",
+    amount: 0,
+    active: true,
+    checksLeft: 3,
+    activatedAt: new Date().toISOString()
+  };
+  LS.set("voxtrace_active_plan", trialPlan);
+  VT.updatePlanBanner();
+  toast("🎉 Free Trial activated! 3 free voice checks are ready.");
+  setTimeout(()=>{ location.hash = "#/verify"; }, 800);
+};
+
+VT.payForPlan = async function(planName, price){
+  if(typeof Razorpay === "undefined"){
+    toast("⚠️ Razorpay SDK loading, please wait...");
+    return;
+  }
+  toast("Connecting to secure Razorpay gateway...");
+  try {
+    const res = await fetch("/api/payment/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planName, amount: price })
+    });
+    const data = await res.json();
+    if(data.status !== "success" || !data.order_id){
+      alert("Error initializing payment order: " + (data.message || "Unknown error"));
+      return;
+    }
+
+    const options = {
+      key: data.key_id,
+      amount: data.amount,
+      currency: data.currency,
+      name: "VOXTRACE",
+      description: `${planName} Subscription (${inr(price)}/month)`,
+      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234285F4'/%3E%3Cpath d='M10 32h7l4-12 6 24 5-16 3 4h13' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E",
+      order_id: data.order_id,
+      handler: async function(response){
+        toast("🔒 Verifying cryptographic signature on server...");
+        try {
+          const verifyRes = await fetch("/api/payment/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              plan: planName
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if(verifyData.status === "success" && verifyData.verified){
+            const newPlan = {
+              name: planName,
+              amount: price,
+              active: true,
+              payment_id: response.razorpay_payment_id,
+              order_id: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              verified: true,
+              verifiedAt: new Date().toISOString()
+            };
+            LS.set("voxtrace_active_plan", newPlan);
+            VT.updatePlanBanner();
+            VT.showPaymentSuccessModal(newPlan);
+          } else {
+            alert("❌ Payment verification failed on server: " + (verifyData.message || "Invalid signature"));
+          }
+        } catch(err){
+          alert("Network error during payment verification: " + err.message);
+        }
+      },
+      prefill: {
+        name: "Nishant Kumar",
+        email: "sudonishant@gmail.com",
+        contact: "9999999999"
+      },
+      theme: { color: "#4285F4" },
+      modal: {
+        ondismiss: function(){
+          toast("Payment window closed.");
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on("payment.failed", function(response){
+      alert("❌ Payment failed: " + response.error.description);
+    });
+    rzp.open();
+  } catch(e){
+    console.error("Payment error:", e);
+    alert("Could not start payment checkout. Ensure local server is running.");
+  }
+};
+
+VT.contactEnterprise = function(){
+  location.hash = "#/api";
+  setTimeout(()=>{
+    const leadType = $("leadType");
+    if(leadType) leadType.value = "Enterprise Pilot";
+    const leadName = $("leadName");
+    if(leadName) leadName.focus();
+    toast("📋 Pre-selected Enterprise Inquiry form.");
+  }, 400);
+};
+
+VT.showPaymentSuccessModal = function(receipt){
+  const modal = $("paymentSuccessModal");
+  if(!modal) return;
+  $("modalPlanName").textContent = receipt.name;
+  $("modalAmount").textContent = inr(receipt.amount) + " / month";
+  $("modalPayId").textContent = receipt.payment_id;
+  $("modalOrderId").textContent = receipt.order_id;
+  $("modalSigHash").textContent = receipt.signature ? receipt.signature.slice(0, 24) + "…" : "Verified (HMAC-SHA256)";
+  modal.style.display = "flex";
+};
+
+VT.closePaymentModal = function(){
+  const modal = $("paymentSuccessModal");
+  if(modal) modal.style.display = "none";
+  location.hash = "#/verify";
 };

@@ -9,6 +9,7 @@
 <meta property="og:description" content="AI Trust Infrastructure for Voice & Digital Evidence. Detect deepfake calls, explain risk, anchor evidence.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234285F4'/%3E%3Cpath d='M14 32h6l4-12 6 24 5-16 3 4h12' stroke='%23fff' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
 /* ============================================================
    VOXTRACE — production UI in the fundmycrazy.com design language
@@ -248,6 +249,21 @@ table.prize-table{width:100%;border-collapse:separate;border-spacing:0 10px;min-
 .prize-table .mini{display:block;color:var(--body);font-size:13px;margin-top:5px;font-weight:400;line-height:1.45}
 .prize-table .ribbon{display:inline-block;background:var(--yellow);color:var(--ink);font-size:10.5px;font-weight:800;letter-spacing:.06em;
   padding:4px 11px;border-radius:999px;margin-left:8px;vertical-align:2px;text-transform:uppercase}
+.plan-act-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s cubic-bezier(.2,0,0,1);border:none;margin-top:10px;text-decoration:none;letter-spacing:.01em}
+.btn-plan-trial{background:var(--lighter-blue);color:var(--blue-dark);border:1.5px solid var(--blue)}
+.btn-plan-trial:hover{background:var(--light-blue);transform:translateY(-1.5px)}
+.btn-plan-pay{background:var(--blue);color:#fff;box-shadow:0 3px 12px rgba(66,133,244,.35)}
+.btn-plan-pay:hover{background:var(--blue-dark);transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(66,133,244,.4)}
+.btn-plan-contact{background:var(--gray);color:var(--ink);border:1.5px solid #dadce0}
+.btn-plan-contact:hover{background:#e8eaed;transform:translateY(-1.5px)}
+.plan-pill-badge{display:inline-flex;align-items:center;gap:6px;background:#e6f4ea;color:#137333;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #ceead6;margin-left:8px}
+
+.payment-modal-overlay{position:fixed;inset:0;background:rgba(18,19,23,.65);backdrop-filter:blur(5px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
+.payment-modal-card{background:#fff;border-radius:24px;max-width:480px;width:100%;padding:32px;box-shadow:0 24px 60px rgba(0,0,0,.3);position:relative;text-align:center;animation:popIn .25s ease}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.payment-modal-icon{width:64px;height:64px;border-radius:50%;background:#e6f4ea;color:#137333;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;border:2px solid #ceead6}
+.payment-receipt-box{background:var(--gray);border-radius:14px;padding:14px;text-align:left;font-size:12.5px;margin:18px 0;font-family:var(--mono);word-break:break-all;line-height:1.6}
+.payment-receipt-box span.k{color:var(--body);font-family:var(--font-sans);font-weight:600}
 
 .calc-card{max-width:1060px;margin:26px auto 0;padding:0 24px}
 .calc-inner{background:var(--white);border-radius:22px;box-shadow:var(--shadow-card);padding:clamp(26px,3.6vw,44px)}
@@ -527,6 +543,7 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
       <li><a href="#/api" data-nav="api">API &amp; Partners</a></li>
       <li><a href="#/dashboard" data-nav="dashboard">Dashboard</a></li>
       <li><a href="#/verify" class="btn-verify" data-nav="verify">Verify a voice →</a></li>
+      <li><span id="userPlanBadge" class="plan-pill-badge" style="display:none"></span></li>
     </ul>
   </div>
 </header>
@@ -752,22 +769,34 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
           <tr>
             <td><b>Free Trial</b><span class="ribbon" style="background:#0F9D58">Always Free</span><span class="mini">Individuals &amp; test users</span></td>
             <td>3 voice verifications / month · Web console · Instant Trust Score · Evidence Passport preview · No credit card required</td>
-            <td><b>₹0</b><span class="mini">3 free checks / mo</span></td>
+            <td>
+              <div><b>₹0</b><span class="mini">3 free checks / mo</span></div>
+              <button type="button" class="plan-act-btn btn-plan-trial" onclick="VT.selectFreeTrial()">Start Free</button>
+            </td>
           </tr>
           <tr>
             <td><b>Normal / Personal</b><span class="ribbon" style="background:#FBBC04;color:#202124">Launch: ₹199</span><span class="mini">Professionals &amp; job seekers</span></td>
             <td>50 verifications / month · Full Trust Score breakdown · Audio spectral check · Priority processing · Evidence reports</td>
-            <td><b>₹199</b> <span class="mini" style="text-decoration:line-through;color:var(--body);opacity:0.7">₹499</span><span class="mini">Introductory pricing</span></td>
+            <td>
+              <div><b>₹199</b> <span class="mini" style="text-decoration:line-through;color:var(--body);opacity:0.7">₹499</span><span class="mini">Introductory pricing</span></div>
+              <button type="button" class="plan-act-btn btn-plan-pay" onclick="VT.payForPlan('Normal / Personal', 199)">⚡ Subscribe ₹199</button>
+            </td>
           </tr>
           <tr>
             <td><b>Business</b><span class="ribbon">Most popular</span><span class="mini">Fintechs, BPOs, HR platforms</span></td>
             <td>1,000 verifications / month + Full API access · Team dashboard · Live-call stream integration · Audit logs &amp; exports · Add-on verifications supported</td>
-            <td><b>₹1,999</b></td>
+            <td>
+              <div><b>₹1,999</b><span class="mini">per month</span></div>
+              <button type="button" class="plan-act-btn btn-plan-pay" onclick="VT.payForPlan('Business', 1999)">⚡ Subscribe ₹1,999</button>
+            </td>
           </tr>
           <tr>
             <td><b>Enterprise &amp; Add-ons</b><span class="mini">Banks &amp; high-volume clients</span></td>
             <td>Custom volume + SLA uptime · On-prem / VPC deployment · White-label licensing · Dedicated support · Add-ons @ ₹1.5/call beyond quota</td>
-            <td><b>Custom / ₹25,000+</b></td>
+            <td>
+              <div><b>Custom / ₹25,000+</b></div>
+              <button type="button" class="plan-act-btn btn-plan-contact" onclick="VT.contactEnterprise()">Contact Sales</button>
+            </td>
           </tr>
           <tr class="total">
             <td>Flexible Hybrid Model</td>
@@ -1188,6 +1217,7 @@ function boot(){
   }catch(e){}
   try{ drawHeroWave(); }catch(e){}
   try{ VT.calc(); }catch(e){}
+  try{ VT.updatePlanBanner(); }catch(e){}
 }
 // boot as soon as DOM is ready — never wait on images/fonts/network for first paint
 if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
@@ -1871,7 +1901,184 @@ VT.submitLead = function(){
   toast("📩 Inquiry saved — the VOXTRACE team will reach out. (Demo: stored locally.)");
 };
 
+/* ---------------- razorpay payments & subscriptions ---------------- */
+VT.updatePlanBanner = function(){
+  const plan = LS.get("voxtrace_active_plan", null);
+  const badge = $("userPlanBadge");
+  if(!badge) return;
+  if(plan && plan.name){
+    badge.style.display = "inline-flex";
+    if(plan.name === "Free Trial"){
+      badge.innerHTML = `🎁 Free Trial (${plan.checksLeft || 3} left)`;
+      badge.style.background = "#e8f0fe";
+      badge.style.color = "#1a73e8";
+      badge.style.borderColor = "#d2e3fc";
+    } else {
+      badge.innerHTML = `⚡ ${plan.name} Active`;
+      badge.style.background = "#e6f4ea";
+      badge.style.color = "#137333";
+      badge.style.borderColor = "#ceead6";
+    }
+  } else {
+    badge.style.display = "none";
+  }
+};
+
+VT.selectFreeTrial = function(){
+  const current = LS.get("voxtrace_active_plan", null);
+  if(current && current.name === "Free Trial"){
+    toast("✓ Free Trial already active! (3 checks / month)");
+    location.hash = "#/verify";
+    return;
+  }
+  const trialPlan = {
+    name: "Free Trial",
+    amount: 0,
+    active: true,
+    checksLeft: 3,
+    activatedAt: new Date().toISOString()
+  };
+  LS.set("voxtrace_active_plan", trialPlan);
+  VT.updatePlanBanner();
+  toast("🎉 Free Trial activated! 3 free voice checks are ready.");
+  setTimeout(()=>{ location.hash = "#/verify"; }, 800);
+};
+
+VT.payForPlan = async function(planName, price){
+  if(typeof Razorpay === "undefined"){
+    toast("⚠️ Razorpay SDK loading, please wait...");
+    return;
+  }
+  toast("Connecting to secure Razorpay gateway...");
+  try {
+    const res = await fetch("/api/payment/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planName, amount: price })
+    });
+    const data = await res.json();
+    if(data.status !== "success" || !data.order_id){
+      alert("Error initializing payment order: " + (data.message || "Unknown error"));
+      return;
+    }
+
+    const options = {
+      key: data.key_id,
+      amount: data.amount,
+      currency: data.currency,
+      name: "VOXTRACE",
+      description: `${planName} Subscription (${inr(price)}/month)`,
+      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234285F4'/%3E%3Cpath d='M10 32h7l4-12 6 24 5-16 3 4h13' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E",
+      order_id: data.order_id,
+      handler: async function(response){
+        toast("🔒 Verifying cryptographic signature on server...");
+        try {
+          const verifyRes = await fetch("/api/payment/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              plan: planName
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if(verifyData.status === "success" && verifyData.verified){
+            const newPlan = {
+              name: planName,
+              amount: price,
+              active: true,
+              payment_id: response.razorpay_payment_id,
+              order_id: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              verified: true,
+              verifiedAt: new Date().toISOString()
+            };
+            LS.set("voxtrace_active_plan", newPlan);
+            VT.updatePlanBanner();
+            VT.showPaymentSuccessModal(newPlan);
+          } else {
+            alert("❌ Payment verification failed on server: " + (verifyData.message || "Invalid signature"));
+          }
+        } catch(err){
+          alert("Network error during payment verification: " + err.message);
+        }
+      },
+      prefill: {
+        name: "Nishant Kumar",
+        email: "sudonishant@gmail.com",
+        contact: "9999999999"
+      },
+      theme: { color: "#4285F4" },
+      modal: {
+        ondismiss: function(){
+          toast("Payment window closed.");
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on("payment.failed", function(response){
+      alert("❌ Payment failed: " + response.error.description);
+    });
+    rzp.open();
+  } catch(e){
+    console.error("Payment error:", e);
+    alert("Could not start payment checkout. Ensure local server is running.");
+  }
+};
+
+VT.contactEnterprise = function(){
+  location.hash = "#/api";
+  setTimeout(()=>{
+    const leadType = $("leadType");
+    if(leadType) leadType.value = "Enterprise Pilot";
+    const leadName = $("leadName");
+    if(leadName) leadName.focus();
+    toast("📋 Pre-selected Enterprise Inquiry form.");
+  }, 400);
+};
+
+VT.showPaymentSuccessModal = function(receipt){
+  const modal = $("paymentSuccessModal");
+  if(!modal) return;
+  $("modalPlanName").textContent = receipt.name;
+  $("modalAmount").textContent = inr(receipt.amount) + " / month";
+  $("modalPayId").textContent = receipt.payment_id;
+  $("modalOrderId").textContent = receipt.order_id;
+  $("modalSigHash").textContent = receipt.signature ? receipt.signature.slice(0, 24) + "…" : "Verified (HMAC-SHA256)";
+  modal.style.display = "flex";
+};
+
+VT.closePaymentModal = function(){
+  const modal = $("paymentSuccessModal");
+  if(modal) modal.style.display = "none";
+  location.hash = "#/verify";
+};
+
 </script>
+
+<!-- Payment Success & Verification Modal -->
+<div id="paymentSuccessModal" class="payment-modal-overlay" style="display:none" role="dialog" aria-modal="true">
+  <div class="payment-modal-card">
+    <div class="payment-modal-icon">✔</div>
+    <h3 style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:6px">Payment Verified &amp; Active!</h3>
+    <p style="color:var(--body);font-size:14px">Your VOXTRACE subscription has been cryptographically confirmed on our secure server.</p>
+    
+    <div class="payment-receipt-box">
+      <div><span class="k">Plan:</span> <b id="modalPlanName">Normal / Personal</b></div>
+      <div><span class="k">Amount:</span> <b id="modalAmount">₹199 / month</b></div>
+      <div><span class="k">Payment ID:</span> <span id="modalPayId">pay_xxxx</span></div>
+      <div><span class="k">Order ID:</span> <span id="modalOrderId">order_xxxx</span></div>
+      <div><span class="k">HMAC SHA-256:</span> <span id="modalSigHash">Verified</span></div>
+      <div style="margin-top:4px;color:#137333;font-weight:700">Status: Genuine &amp; Tamper-evident ✓</div>
+    </div>
+
+    <button type="button" class="plan-act-btn btn-plan-pay" style="width:100%;padding:12px 20px;font-size:15px" onclick="VT.closePaymentModal()">Start Verifying Voices →</button>
+  </div>
+</div>
+
 <script>
 /* Non-blocking font upgrade — falls back silently to system fonts when offline */
 (function(){try{

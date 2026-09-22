@@ -236,6 +236,21 @@ table.prize-table{width:100%;border-collapse:separate;border-spacing:0 10px;min-
 .prize-table .mini{display:block;color:var(--body);font-size:13px;margin-top:5px;font-weight:400;line-height:1.45}
 .prize-table .ribbon{display:inline-block;background:var(--yellow);color:var(--ink);font-size:10.5px;font-weight:800;letter-spacing:.06em;
   padding:4px 11px;border-radius:999px;margin-left:8px;vertical-align:2px;text-transform:uppercase}
+.plan-act-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s cubic-bezier(.2,0,0,1);border:none;margin-top:10px;text-decoration:none;letter-spacing:.01em}
+.btn-plan-trial{background:var(--lighter-blue);color:var(--blue-dark);border:1.5px solid var(--blue)}
+.btn-plan-trial:hover{background:var(--light-blue);transform:translateY(-1.5px)}
+.btn-plan-pay{background:var(--blue);color:#fff;box-shadow:0 3px 12px rgba(66,133,244,.35)}
+.btn-plan-pay:hover{background:var(--blue-dark);transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(66,133,244,.4)}
+.btn-plan-contact{background:var(--gray);color:var(--ink);border:1.5px solid #dadce0}
+.btn-plan-contact:hover{background:#e8eaed;transform:translateY(-1.5px)}
+.plan-pill-badge{display:inline-flex;align-items:center;gap:6px;background:#e6f4ea;color:#137333;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #ceead6;margin-left:8px}
+
+.payment-modal-overlay{position:fixed;inset:0;background:rgba(18,19,23,.65);backdrop-filter:blur(5px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
+.payment-modal-card{background:#fff;border-radius:24px;max-width:480px;width:100%;padding:32px;box-shadow:0 24px 60px rgba(0,0,0,.3);position:relative;text-align:center;animation:popIn .25s ease}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.payment-modal-icon{width:64px;height:64px;border-radius:50%;background:#e6f4ea;color:#137333;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;border:2px solid #ceead6}
+.payment-receipt-box{background:var(--gray);border-radius:14px;padding:14px;text-align:left;font-size:12.5px;margin:18px 0;font-family:var(--mono);word-break:break-all;line-height:1.6}
+.payment-receipt-box span.k{color:var(--body);font-family:var(--font-sans);font-weight:600}
 
 .calc-card{max-width:1060px;margin:26px auto 0;padding:0 24px}
 .calc-inner{background:var(--white);border-radius:22px;box-shadow:var(--shadow-card);padding:clamp(26px,3.6vw,44px)}
