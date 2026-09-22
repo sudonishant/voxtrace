@@ -750,23 +750,28 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
         <thead><tr><th>Plan</th><th>What's included</th><th>Price / month</th></tr></thead>
         <tbody>
           <tr>
-            <td><b>Starter</b><span class="mini">Freemium entry — individuals &amp; small teams</span></td>
-            <td>100 verifications included · web console · Trust Score reports · Evidence Passport anchoring · email support</td>
-            <td>₹5,000</td>
+            <td><b>Free Trial</b><span class="ribbon" style="background:#0F9D58">Always Free</span><span class="mini">Individuals &amp; test users</span></td>
+            <td>3 voice verifications / month · Web console · Instant Trust Score · Evidence Passport preview · No credit card required</td>
+            <td><b>₹0</b><span class="mini">3 free checks / mo</span></td>
           </tr>
           <tr>
-            <td><b>Business</b><span class="ribbon">Most popular</span><span class="mini">BPOs, fintechs, HR platforms</span></td>
-            <td>1,000 verifications + API access · tokenised usage beyond quota · team dashboard + exports · live-call streaming integration · priority support</td>
-            <td>₹25,000</td>
+            <td><b>Normal / Personal</b><span class="ribbon" style="background:#FBBC04;color:#202124">Launch: ₹199</span><span class="mini">Professionals &amp; job seekers</span></td>
+            <td>50 verifications / month · Full Trust Score breakdown · Audio spectral check · Priority processing · Evidence reports</td>
+            <td><b>₹199</b> <span class="mini" style="text-decoration:line-through;color:var(--body);opacity:0.7">₹499</span><span class="mini">Introductory pricing</span></td>
           </tr>
           <tr>
-            <td><b>Enterprise</b><span class="mini">Banks &amp; large-scale deployments</span></td>
-            <td>Custom volume + SLA-backed uptime · on-prem / VPC deployment · white-label &amp; licence deals · integrations + audit workflow design · dedicated success manager</td>
-            <td>₹1,00,000+</td>
+            <td><b>Business</b><span class="ribbon">Most popular</span><span class="mini">Fintechs, BPOs, HR platforms</span></td>
+            <td>1,000 verifications / month + Full API access · Team dashboard · Live-call stream integration · Audit logs &amp; exports · Add-on verifications supported</td>
+            <td><b>₹1,999</b></td>
+          </tr>
+          <tr>
+            <td><b>Enterprise &amp; Add-ons</b><span class="mini">Banks &amp; high-volume clients</span></td>
+            <td>Custom volume + SLA uptime · On-prem / VPC deployment · White-label licensing · Dedicated support · Add-ons @ ₹1.5/call beyond quota</td>
+            <td><b>Custom / ₹25,000+</b></td>
           </tr>
           <tr class="total">
-            <td>Hybrid model</td>
-            <td>Subscription (base access) + usage-based API billing + enterprise contracts</td>
+            <td>Flexible Hybrid Model</td>
+            <td>Free Trial (3 checks/mo) + Affordable Subscriptions + API Usage &amp; Add-ons</td>
             <td>Recommended ✓</td>
           </tr>
         </tbody>
@@ -776,27 +781,27 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
     <div class="calc-card">
       <div class="calc-inner">
         <h3>📈 Revenue calculator</h3>
-        <p class="hint">Illustrative math to show how tiers could stack up — drag the sliders. Defaults mirror the pitch example.</p>
+        <p class="hint">Illustrative math to show how tiers could stack up with new pricing — drag the sliders.</p>
         <div class="calc-row">
           <div class="calc-fld">
-            <label>Small customers <span class="rangeval" id="vSmall">100</span></label>
-            <input type="range" min="0" max="500" value="100" id="rSmall" oninput="VT.calc()" aria-label="Small customers">
-            <span class="unit">× ₹5,000 / month each</span>
+            <label>Normal customers (₹199/mo) <span class="rangeval" id="vSmall">500</span></label>
+            <input type="range" min="0" max="2000" value="500" id="rSmall" oninput="VT.calc()" aria-label="Normal customers">
+            <span class="unit">× ₹199 / month each</span>
           </div>
           <div class="calc-fld">
-            <label>Business customers <span class="rangeval" id="vBiz">20</span></label>
-            <input type="range" min="0" max="100" value="20" id="rBiz" oninput="VT.calc()" aria-label="Business customers">
-            <span class="unit">× ₹25,000 / month each</span>
+            <label>Business customers (₹1,999/mo) <span class="rangeval" id="vBiz">100</span></label>
+            <input type="range" min="0" max="500" value="100" id="rBiz" oninput="VT.calc()" aria-label="Business customers">
+            <span class="unit">× ₹1,999 / month each</span>
           </div>
           <div class="calc-fld">
             <label>Enterprise contracts <span class="rangeval" id="vEnt">5</span></label>
             <input type="range" min="0" max="30" value="5" id="rEnt" oninput="VT.calc()" aria-label="Enterprise contracts">
-            <span class="unit">× ₹1,00,000 / month each</span>
+            <span class="unit">× ₹25,000 / month each</span>
           </div>
         </div>
         <div class="calc-out">
           <span class="lbl">Total hypothetical revenue</span>
-          <span class="big" id="calcOut">₹15,00,000 / month</span>
+          <span class="big" id="calcOut">₹4,24,400 / month</span>
         </div>
         <p class="disclaim">⚠️ <span>Illustrative only — not a forecast. Real revenue depends on customer acquisition, detection quality,
            infrastructure costs, sales cycle, and pricing validation.</span></p>
@@ -849,15 +854,15 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
       </div>
       <div class="faq-item">
         <button class="faq-q">What are the pricing models? <span class="toggle">+</span></button>
-        <div class="faq-a">Three levers: freemium (free tier for individuals / low-volume checks), per-verification pricing for occasional users, and flat monthly plans for predictable enterprise usage. The recommended hybrid combines subscription base access + usage-based API billing + enterprise contracts.</div>
+        <div class="faq-a">Four accessible tiers: Always Free Trial (3 free voice checks every month), Normal/Personal plan (launch offer at ₹199/month, regular ₹499), Business plan at ₹1,999/month (1,000 verifications + full API access), and Enterprise plans with flexible pay-as-you-go add-ons.</div>
       </div>
       <div class="faq-item">
         <button class="faq-q">Can we white-label or license the engine? <span class="toggle">+</span></button>
         <div class="faq-a">Yes. Cybersecurity platforms can integrate the detection engine into their own products and pay for API usage, an annual licence, and enterprise support. This scales faster than direct sales by riding a partner's existing distribution.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Is the ₹15 lakh / month figure a forecast? <span class="toggle">+</span></button>
-        <div class="faq-a">No — it's illustrative math (100 × ₹5,000 + 20 × ₹25,000 + 5 × ₹1,00,000) showing how tiers could stack up. Real revenue depends on customer acquisition, detection quality, infrastructure costs, sales cycle, and pricing validation.</div>
+        <button class="faq-q">Is the revenue calculator figure a forecast? <span class="toggle">+</span></button>
+        <div class="faq-a">No — it's illustrative math (e.g. 500 × ₹199 + 100 × ₹1,999 + 5 × ₹25,000) showing how consumer, business, and enterprise tiers stack up. Real revenue depends on customer acquisition, detection quality, infrastructure costs, sales cycle, and pricing validation.</div>
       </div>
       <div class="faq-item">
         <button class="faq-q">What's the India-specific angle? <span class="toggle">+</span></button>
@@ -1835,7 +1840,7 @@ async function reVerify(file){
 VT.calc = function(){
   const s = +$("rSmall").value, b = +$("rBiz").value, e = +$("rEnt").value;
   $("vSmall").textContent = s; $("vBiz").textContent = b; $("vEnt").textContent = e;
-  const total = s*5000 + b*25000 + e*100000;
+  const total = s*199 + b*1999 + e*25000;
   $("calcOut").textContent = inr(total) + " / month";
 };
 

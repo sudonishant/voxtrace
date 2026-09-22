@@ -711,7 +711,7 @@ async function reVerify(file){
 VT.calc = function(){
   const s = +$("rSmall").value, b = +$("rBiz").value, e = +$("rEnt").value;
   $("vSmall").textContent = s; $("vBiz").textContent = b; $("vEnt").textContent = e;
-  const total = s*5000 + b*25000 + e*100000;
+  const total = s*199 + b*1999 + e*25000;
   $("calcOut").textContent = inr(total) + " / month";
 };
 
