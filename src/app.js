@@ -210,14 +210,41 @@ let pendingAudio = null; // {bytes:Uint8Array, buffer:AudioBuffer, label, mode}
 
 async function loadBlob(blob, label, mode){
   const bytes = new Uint8Array(await blob.arrayBuffer());
+  const ext = label.split('.').pop().toLowerCase();
   const ac = new (window.AudioContext||window.webkitAudioContext)();
   let buffer;
+
+  // 1. Try browser native Web Audio API first
   try{
     buffer = await ac.decodeAudioData(bytes.slice(0).buffer);
   }catch(e){
-    toast("Could not decode this audio format in the browser."); return;
+    // 2. If native decode fails (common for .amr, .awb, .3gp), try backend transcoding
+    try{
+      toast("Transcoding " + ext.toUpperCase() + " audio…");
+      const resp = await fetch("/api/audio/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: bytes
+      });
+      if(resp.ok){
+        const wavBytes = new Uint8Array(await resp.arrayBuffer());
+        const ac2 = new (window.AudioContext||window.webkitAudioContext)();
+        buffer = await ac2.decodeAudioData(wavBytes.slice(0).buffer);
+        ac2.close();
+      }else{
+        throw new Error("Transcoding failed");
+      }
+    }catch(err2){
+      ac.close();
+      const hint = ['amr','awb','3gp','3gpp'].includes(ext)
+        ? `${ext.toUpperCase()} audio cannot be decoded directly. Convert to WAV/MP3 first.`
+        : "Could not decode audio format. Try MP3, WAV, M4A, OGG, or FLAC.";
+      toast("❌ " + hint);
+      return;
+    }
   }
   ac.close();
+
   if(buffer.duration < 0.4){ toast("Sample is shorter than 0.4s — need more audio to analyse."); return; }
   if(buffer.duration > 90){ // trim to first 90s for perf
     const sr = buffer.sampleRate, len = Math.floor(sr*90), ch = buffer.numberOfChannels;
@@ -230,6 +257,7 @@ async function loadBlob(blob, label, mode){
   $("fileMeta").style.display = "";
   $("fileName").textContent = label + " · " + buffer.duration.toFixed(1) + "s · " + fmtBytes(bytes);
   $("analyzeBtn").disabled = false;
+  toast("Audio loaded: " + label + " (" + buffer.duration.toFixed(1) + "s)");
 }
 
 /* ---------------- demo sample synthesis ---------------- */

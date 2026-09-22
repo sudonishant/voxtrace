@@ -63,9 +63,10 @@ button{font-family:inherit}
 /* ============ NAV ============ */
 .nav{position:sticky;top:0;z-index:100;background:var(--white);box-shadow:0 1px 0 rgba(0,0,0,.06)}
 .nav-inner{max-width:1400px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.nav-brand{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;white-space:nowrap;letter-spacing:.02em}
-.nav-brand .logo{width:34px;height:34px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(66,133,244,.35)}
-.nav-brand em{font-style:normal;color:var(--blue)}
+.nav-brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;white-space:nowrap;letter-spacing:-0.03em}
+.nav-brand .logo{width:34px;height:34px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(66,133,244,.35);flex-shrink:0}
+.nav-brand .brand-text{display:inline-flex;align-items:center;letter-spacing:-0.03em;font-weight:800}
+.nav-brand em{font-style:normal;color:var(--blue);font-weight:800;margin:0;padding:0}
 .nav-links{display:flex;align-items:center;gap:clamp(12px,1.6vw,26px);list-style:none}
 .nav-links a{font-size:clamp(12.5px,1vw,14px);font-weight:600;color:var(--ink);transition:color .2s;white-space:nowrap;padding:6px 2px}
 .nav-links a:hover,.nav-links a.active{color:var(--blue)}
@@ -529,12 +530,7 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
 <!-- ============ NAV ============ -->
 <header class="nav">
   <div class="nav-inner">
-    <a class="nav-brand" href="#/home">
-      <span class="logo">
-        <svg width="20" height="20" viewBox="0 0 64 64"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-      VOX<em>TRACE</em>
-    </a>
+    <a class="nav-brand" href="#/home"><span class="logo"><svg width="20" height="20" viewBox="0 0 64 64"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-text">VOX<em>TRACE</em></span></a>
     <button class="nav-toggle" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
     <ul class="nav-links" id="navLinks">
       <li><a href="#/home" data-nav="home">What is VOXTRACE</a></li>
@@ -940,9 +936,9 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
             <div class="rec-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
               <div style="font-size:38px">🎧</div>
               <b>Drop an audio file here</b> or click to browse
-              <div style="color:var(--body);font-size:12.5px;margin-top:6px">mp3 · wav · m4a · ogg — decoded locally, never uploaded</div>
+              <div style="color:var(--body);font-size:12.5px;margin-top:6px">mp3 · wav · m4a · ogg · aac · flac · awb · amr · opus · webm — decoded locally, never uploaded</div>
             </div>
-            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg" style="display:none">
+            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.awb,.amr,.3gp,.3gpp,.aac,.flac,.weba,.opus" style="display:none">
             <div class="demo-row">
               <button class="btn ghost small" onclick="VT.runDemo('human')">▶ Demo: genuine human sample</button>
               <button class="btn ghost small" onclick="VT.runDemo('clone')">▶ Demo: AI-cloned sample</button>
@@ -1366,14 +1362,41 @@ let pendingAudio = null; // {bytes:Uint8Array, buffer:AudioBuffer, label, mode}
 
 async function loadBlob(blob, label, mode){
   const bytes = new Uint8Array(await blob.arrayBuffer());
+  const ext = label.split('.').pop().toLowerCase();
   const ac = new (window.AudioContext||window.webkitAudioContext)();
   let buffer;
+
+  // 1. Try browser native Web Audio API first
   try{
     buffer = await ac.decodeAudioData(bytes.slice(0).buffer);
   }catch(e){
-    toast("Could not decode this audio format in the browser."); return;
+    // 2. If native decode fails (common for .amr, .awb, .3gp), try backend transcoding
+    try{
+      toast("Transcoding " + ext.toUpperCase() + " audio…");
+      const resp = await fetch("/api/audio/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: bytes
+      });
+      if(resp.ok){
+        const wavBytes = new Uint8Array(await resp.arrayBuffer());
+        const ac2 = new (window.AudioContext||window.webkitAudioContext)();
+        buffer = await ac2.decodeAudioData(wavBytes.slice(0).buffer);
+        ac2.close();
+      }else{
+        throw new Error("Transcoding failed");
+      }
+    }catch(err2){
+      ac.close();
+      const hint = ['amr','awb','3gp','3gpp'].includes(ext)
+        ? `${ext.toUpperCase()} audio cannot be decoded directly. Convert to WAV/MP3 first.`
+        : "Could not decode audio format. Try MP3, WAV, M4A, OGG, or FLAC.";
+      toast("❌ " + hint);
+      return;
+    }
   }
   ac.close();
+
   if(buffer.duration < 0.4){ toast("Sample is shorter than 0.4s — need more audio to analyse."); return; }
   if(buffer.duration > 90){ // trim to first 90s for perf
     const sr = buffer.sampleRate, len = Math.floor(sr*90), ch = buffer.numberOfChannels;
@@ -1386,6 +1409,7 @@ async function loadBlob(blob, label, mode){
   $("fileMeta").style.display = "";
   $("fileName").textContent = label + " · " + buffer.duration.toFixed(1) + "s · " + fmtBytes(bytes);
   $("analyzeBtn").disabled = false;
+  toast("Audio loaded: " + label + " (" + buffer.duration.toFixed(1) + "s)");
 }
 
 /* ---------------- demo sample synthesis ---------------- */

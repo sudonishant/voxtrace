@@ -42,12 +42,7 @@
 <!-- ============ NAV ============ -->
 <header class="nav">
   <div class="nav-inner">
-    <a class="nav-brand" href="#/home">
-      <span class="logo">
-        <svg width="20" height="20" viewBox="0 0 64 64"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-      VOX<em>TRACE</em>
-    </a>
+    <a class="nav-brand" href="#/home"><span class="logo"><svg width="20" height="20" viewBox="0 0 64 64"><path d="M10 32h7l4-12 6 24 5-16 3 4h13" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-text">VOX<em>TRACE</em></span></a>
     <button class="nav-toggle" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
     <ul class="nav-links" id="navLinks">
       <li><a href="#/home" data-nav="home">What is VOXTRACE</a></li>
@@ -453,9 +448,9 @@
             <div class="rec-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
               <div style="font-size:38px">🎧</div>
               <b>Drop an audio file here</b> or click to browse
-              <div style="color:var(--body);font-size:12.5px;margin-top:6px">mp3 · wav · m4a · ogg — decoded locally, never uploaded</div>
+              <div style="color:var(--body);font-size:12.5px;margin-top:6px">mp3 · wav · m4a · ogg · aac · flac · awb · amr · opus · webm — decoded locally, never uploaded</div>
             </div>
-            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg" style="display:none">
+            <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.awb,.amr,.3gp,.3gpp,.aac,.flac,.weba,.opus" style="display:none">
             <div class="demo-row">
               <button class="btn ghost small" onclick="VT.runDemo('human')">▶ Demo: genuine human sample</button>
               <button class="btn ghost small" onclick="VT.runDemo('clone')">▶ Demo: AI-cloned sample</button>

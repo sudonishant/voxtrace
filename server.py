@@ -186,7 +186,44 @@ class VoxTraceHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 print("Payment verification error:", str(e))
                 self.send_json(500, {"status": "error", "message": str(e)})
-            return
+        elif self.path == "/api/audio/convert":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                audio_bytes = self.rfile.read(content_len)
+                if not audio_bytes:
+                    self.send_json(400, {"status": "error", "message": "No audio data received"})
+                    return
+
+                import subprocess, tempfile
+                with tempfile.NamedTemporaryFile(suffix=".input", delete=False) as f_in:
+                    f_in.write(audio_bytes)
+                    in_path = f_in.name
+
+                out_path = in_path + ".wav"
+                ffmpeg_bin = "/home/nee/.local/bin/ffmpeg" if os.path.exists("/home/nee/.local/bin/ffmpeg") else "ffmpeg"
+                cmd = [ffmpeg_bin, "-y", "-i", in_path, "-vn", "-ar", "16000", "-ac", "1", "-f", "wav", out_path]
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+                with open(out_path, "rb") as f_out:
+                    wav_data = f_out.read()
+
+                try:
+                    os.remove(in_path)
+                    os.remove(out_path)
+                except Exception:
+                    pass
+
+                self.send_response(200)
+                self.send_header("Content-Type", "audio/wav")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(wav_data)))
+                self.end_headers()
+                self.wfile.write(wav_data)
+                return
+            except Exception as e:
+                print("Audio convert error:", str(e))
+                self.send_json(500, {"status": "error", "message": str(e)})
+                return
 
         self.send_json(404, {"error": "Not Found"})
 
