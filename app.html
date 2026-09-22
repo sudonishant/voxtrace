@@ -850,10 +850,8 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
       <div class="moat-item mg"><h3>🔗 Workflow lock-in</h3><p>Fraud-case intelligence, enterprise-system integrations, and evidence / audit workflows embedded into customer operations.</p></div>
       <div class="moat-item mr"><h3>🤝 Distribution via partners</h3><p>White-label licensing rides an existing cybersecurity company's distribution instead of selling one customer at a time.</p></div>
     </div>
-    <div class="reposition">
-      <div class="from"><div class="lbl">Hackathon version</div><p>AI Voice Clone Detection + Blockchain + Forensics</p></div>
-      <div class="arrow">➜</div>
-      <div class="to"><div class="lbl">Startup version</div><p>VOXTRACE — AI Trust Infrastructure · B2B SaaS + API + Enterprise · voice deepfakes today, multimodal authenticity tomorrow</p></div>
+    <div class="reposition" style="border-style:solid;background:var(--white);box-shadow:var(--shadow-card);border:1px solid #d2e3fc;border-radius:18px;text-align:center;justify-content:center">
+      <div class="to" style="text-align:center"><div class="lbl">AI Trust Infrastructure</div><p>VOXTRACE — B2B SaaS + API + Enterprise Deployment · Real-Time Deepfake Defense &amp; Evidence Preservation</p></div>
     </div>
   </section>
 
@@ -1132,7 +1130,7 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
   <div class="footer-inner">
     <div class="footer-left">
       <b>VOXTRACE</b> · AI Trust Infrastructure for Voice &amp; Digital Evidence<br>
-      Detect. Explain. Verify. Preserve. — from hackathon build to cybersecurity startup.
+      Detect. Explain. Verify. Preserve. — Enterprise-grade AI Trust &amp; Voice Authenticity Platform.
     </div>
     <div class="footer-right">
       <a href="#/verify">Console</a>
@@ -1510,6 +1508,34 @@ function analyseBuffer(buffer){
     for(let i=0;i<d.length;i++) m[i] = 0.5*(d[i]+d2[i]);
     d = m;
   }
+
+  // ── SILENCE GUARD: compute RMS & peak before anything else ──
+  let sumSq = 0, peak = 0;
+  for(let i = 0; i < d.length; i++){
+    const abs = Math.abs(d[i]);
+    if(abs > peak) peak = abs;
+    sumSq += d[i] * d[i];
+  }
+  const rms = Math.sqrt(sumSq / Math.max(1, d.length));
+
+  if(rms < 0.008 || peak < 0.025){
+    return {
+      score: 4,
+      verdict: "NO SPEECH DETECTED",
+      vClass: "r",
+      confidence: "HIGH",
+      flags: ["Silent audio or microphone muted", "No speech energy detected", "Cannot perform authenticity analysis"],
+      indicators: [
+        {name:"Pitch Naturalness",          w:.25, sub:0, det:"No audio energy — pitch analysis impossible."},
+        {name:"Temporal Pacing",            w:.20, sub:0, det:"Silent recording — no temporal data."},
+        {name:"Spectral Dynamics",          w:.20, sub:0, det:"No spectral content detected."},
+        {name:"High-Frequency Continuity",  w:.15, sub:0, det:"No audio signal present."},
+        {name:"Breathing & Noise Floor",    w:.20, sub:0, det:"Microphone may be muted or disconnected."}
+      ],
+      meta:{duration:+buffer.duration.toFixed(2), sampleRate:sr, framesAnalysed:0}
+    };
+  }
+
   const FL = 2048, HOP = 1024;
   const win = new Float32Array(FL);
   for(let i=0;i<FL;i++) win[i] = 0.5 - 0.5*Math.cos(2*Math.PI*i/(FL-1));
@@ -1549,8 +1575,8 @@ function analyseBuffer(buffer){
     for(let lag=minLag; lag<=maxLag; lag+=2){
       let c=0, nrm=0;
       for(let i=0;i<FL-lag;i+=4){ c += re[i]*re[i+lag]; nrm += re[i]*re[i]; }
-      const score = c/(nrm+1e-9);
-      if(score>best){ best=score; bestLag=lag; }
+      const sc = c/(nrm+1e-9);
+      if(sc>best){ best=sc; bestLag=lag; }
     }
     if(best > 0.35 && bestLag) pitches.push(sr/bestLag);
   }
@@ -1559,6 +1585,9 @@ function analyseBuffer(buffer){
   const std  = a => { if(a.length<2) return 0; const m=mean(a); return Math.sqrt(mean(a.map(x=>(x-m)*(x-m)))); };
   const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
+  // ── LOW-SPEECH GUARD ──
+  const noSpeech = pitches.length < 6;
+
   // 1 — pitch naturalness (CV of f0)
   let cv = 0;
   if(pitches.length >= 8){
@@ -1566,11 +1595,11 @@ function analyseBuffer(buffer){
     const filt = pitches.filter(p=>p>med*0.55 && p<med*1.7);
     const m = mean(filt); cv = m ? std(filt)/m : 0;
   }
-  const pitchSub = pitches.length < 8 ? 55 : clamp(Math.round(cv*950 + 6), 5, 98);
-  const pitchDet = pitches.length < 8 ? "Too few voiced frames for pitch tracking." :
+  const pitchSub = noSpeech ? 5 : clamp(Math.round(cv*950 + 6), 5, 98);
+  const pitchDet = noSpeech ? "No voiced speech frames detected — ambient noise or silence only." :
     "Pitch variation (CV) measured at "+(cv*100).toFixed(1)+"% — "+(cv<0.02?"near-constant pitch is a synthetic signature":cv<0.05?"low variability, mildly synthetic-leaning":"healthy natural intonation spread");
 
-  // 2 — temporal pacing (envelope dynamics + pauses + rhythm regularity)
+  // 2 — temporal pacing
   const eMean = mean(energies), eStd = std(energies);
   const dyn = eMean ? eStd/eMean : 0;
   const voicedThr = eMean*0.25;
@@ -1584,47 +1613,62 @@ function analyseBuffer(buffer){
   const iv = [];
   for(let i=1;i<merged.length;i++) iv.push(merged[i]-merged[i-1]);
   const ivCV = iv.length>=4 ? std(iv)/mean(iv) : 1;
-  const paceSub = clamp(Math.round(dyn*60 + pauseRatio*30 + Math.min(ivCV,1)*45 + 10), 8, 98);
-  const paceDet = "Envelope dynamics "+dyn.toFixed(2)+", pause ratio "+(pauseRatio*100).toFixed(0)+"%, rhythm regularity "+(ivCV*100).toFixed(0)+"% — "+(ivCV<0.08?"metronome-perfect periodicity typical of synthetic output":dyn<0.4?"flat pacing":"natural rhythm variation");
+  const paceSub = noSpeech ? 5 : clamp(Math.round(dyn*60 + pauseRatio*30 + Math.min(ivCV,1)*45 + 10), 8, 98);
+  const paceDet = noSpeech ? "Insufficient speech to measure pacing." :
+    "Envelope dynamics "+dyn.toFixed(2)+", pause ratio "+(pauseRatio*100).toFixed(0)+"%, rhythm regularity "+(ivCV*100).toFixed(0)+"% — "+(ivCV<0.08?"metronome-perfect periodicity typical of synthetic output":dyn<0.4?"flat pacing":"natural rhythm variation");
 
   // 3 — spectral dynamics
   const flStd = std(fluxes), flMean = mean(fluxes), cStd = std(centroids);
   const fluxNorm = flMean ? flStd/flMean : 0;
-  const specSub = clamp(Math.round(fluxNorm*70 + cStd*0.14 + 20), 8, 98);
-  const specDet = "Spectral flux variability "+fluxNorm.toFixed(2)+", centroid spread "+Math.round(cStd)+" Hz — "+(cStd<120?"timbre suspiciously static":"timbre evolving naturally frame-to-frame");
+  const specSub = noSpeech ? 8 : clamp(Math.round(fluxNorm*70 + cStd*0.14 + 20), 8, 98);
+  const specDet = noSpeech ? "No speech — spectral dynamics meaningless." :
+    "Spectral flux variability "+fluxNorm.toFixed(2)+", centroid spread "+Math.round(cStd)+" Hz — "+(cStd<120?"timbre suspiciously static":"timbre evolving naturally frame-to-frame");
 
   // 4 — high-frequency continuity
   const cMean = mean(centroids);
   const flatMean = mean(flats);
   const hfPresent = cMean > Math.min(1500, nyq*0.32);
-  const hfSub = clamp(Math.round((hfPresent?52:18) + flatMean*40 + (cStd>150?10:0)), 8, 98);
-  const hfDet = "Mean spectral centroid "+Math.round(cMean)+" Hz — "+(hfPresent?"upper-band energy intact":"energy concentrated in low band; check for abrupt vocoder roll-off");
+  const hfSub = noSpeech ? 8 : clamp(Math.round((hfPresent?52:18) + flatMean*40 + (cStd>150?10:0)), 8, 98);
+  const hfDet = noSpeech ? "No speech — HF continuity check skipped." :
+    "Mean spectral centroid "+Math.round(cMean)+" Hz — "+(hfPresent?"upper-band energy intact":"energy concentrated in low band; check for abrupt vocoder roll-off");
 
   // 5 — breathing & noise floor
   const quietBreath = energies.filter(e=>e>eMean*0.02 && e<eMean*0.18).length/Math.max(1,energies.length);
-  const noiseSub = clamp(Math.round(quietBreath*260 + (flatMean>0.12?18:6) + 12), 8, 98);
-  const noiseDet = "Low-energy breath/pause frames at "+(quietBreath*100).toFixed(0)+"% — "+(quietBreath<0.05?"almost no breath or room tone (common in synthetic output)":"natural breath and room-tone present");
+  const noiseSub = noSpeech ? 8 : clamp(Math.round(quietBreath*260 + (flatMean>0.12?18:6) + 12), 8, 98);
+  const noiseDet = noSpeech ? "Only ambient noise — no breath pattern to analyse." :
+    "Low-energy breath/pause frames at "+(quietBreath*100).toFixed(0)+"% — "+(quietBreath<0.05?"almost no breath or room tone (common in synthetic output)":"natural breath and room-tone present");
 
   const indicators = [
-    {name:"Pitch Naturalness", w:.25, sub:pitchSub, det:pitchDet},
-    {name:"Temporal Pacing", w:.20, sub:paceSub, det:paceDet},
-    {name:"Spectral Dynamics", w:.20, sub:specSub, det:specDet},
-    {name:"High-Frequency Continuity", w:.15, sub:hfSub, det:hfDet},
-    {name:"Breathing & Noise Floor", w:.20, sub:noiseSub, det:noiseDet}
+    {name:"Pitch Naturalness",          w:.25, sub:pitchSub, det:pitchDet},
+    {name:"Temporal Pacing",            w:.20, sub:paceSub,  det:paceDet},
+    {name:"Spectral Dynamics",          w:.20, sub:specSub,  det:specDet},
+    {name:"High-Frequency Continuity",  w:.15, sub:hfSub,    det:hfDet},
+    {name:"Breathing & Noise Floor",    w:.20, sub:noiseSub, det:noiseDet}
   ];
   let score = Math.round(clamp(indicators.reduce((s,ind)=>s+ind.sub*ind.w, 0), 2, 99));
 
+  // Hard cap for no-speech audio
+  if(noSpeech) score = Math.min(score, 18);
+
   const duration = buffer.duration;
-  const v = classify(score);
+  const v = noSpeech
+    ? {verdict:"INSUFFICIENT SPEECH — RESUBMIT", vClass:"r"}
+    : classify(score);
   const margin = Math.min(Math.abs(score-75), Math.abs(score-40));
   const confidence = (duration>=3 && margin>=8) ? "HIGH" : (duration>=1.5 ? "MEDIUM" : "LOW");
 
   const flags = [];
-  if(pitchSub<45) flags.push("Robotic tonal consistency");
-  if(paceSub<45) flags.push("Unnatural pacing");
-  if(specSub<45) flags.push("Static timbre");
-  if(hfSub<45) flags.push("HF band anomaly");
-  if(noiseSub<45) flags.push("No breath / room tone");
+  if(noSpeech){
+    flags.push("No human voiced speech detected");
+    flags.push("Recording may be silent, muted, or background noise only");
+    flags.push("Please record yourself speaking clearly and resubmit");
+  } else {
+    if(pitchSub<45) flags.push("Robotic tonal consistency");
+    if(paceSub<45)  flags.push("Unnatural pacing");
+    if(specSub<45)  flags.push("Static timbre");
+    if(hfSub<45)    flags.push("HF band anomaly");
+    if(noiseSub<45) flags.push("No breath / room tone");
+  }
 
   return {score, verdict:v.verdict, vClass:v.vClass, confidence, flags, indicators,
           meta:{duration:+duration.toFixed(2), sampleRate:sr, framesAnalysed:Math.ceil(nFrames/step)}};
