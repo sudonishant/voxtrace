@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": null,
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/api/payment/config",
@@ -12,6 +14,10 @@
     {
       "source": "/api/payment/verify",
       "destination": "/api/payment/verify.js"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
