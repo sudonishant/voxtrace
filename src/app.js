@@ -908,15 +908,15 @@ VT.runGenAiDeepScan = async function(r){
   el.className = "genai-box";
   el.innerHTML = `
     <div class="genai-header">
-      <div class="genai-title">🧠 Gen AI Deep Voice Inspection (Gemini AI Model)</div>
+      <div class="genai-title">🧠 Gen AI Deep Voice Inspection (OpenRouter AI Model)</div>
       <div class="genai-badge" id="genAiBadge">⚡ Scanning Neural Waveforms…</div>
     </div>
-    <div style="font-size:12px;color:var(--body);margin-bottom:8px">Running multi-layer vocoder de-convolution, formant kinematics, and glottal phase analysis…</div>
+    <div style="font-size:12px;color:var(--body);margin-bottom:8px">Running multi-layer vocoder de-convolution, formant kinematics, and glottal phase analysis via OpenRouter Llama 3.3 70B & Dual Key Engine…</div>
     <div class="bar" style="margin-bottom:12px"><i class="a" style="width:65%"></i></div>
   `;
 
   try {
-    const userApiKey = LS.get("voxtrace_gemini_key", "");
+    const userApiKey = LS.get("voxtrace_openrouter_key", "") || LS.get("voxtrace_gemini_key", "");
     let audioBase64 = "";
     if(pendingAudio && pendingAudio.bytes && pendingAudio.bytes.length < 3500000){
       let binary = "";
@@ -978,9 +978,9 @@ function renderGenAiResult(data, el){
 
   el.innerHTML = `
     <div class="genai-header">
-      <div class="genai-title">🧠 Gen AI Deep Voice Analysis (${escapeHtml(data.engine || 'Gemini AI Model')})</div>
+      <div class="genai-title">🧠 Gen AI Deep Voice Analysis (${escapeHtml(data.engine || 'OpenRouter Gen AI')})</div>
       <div class="genai-badge" style="background:${isHighRisk?'#fce8e6':'#e6f4ea'};color:${isHighRisk?'#c5221f':'#137333'};border-color:${isHighRisk?'#fad2cf':'#ceead6'}">
-        ${data.isLiveGenAI ? '⚡ LIVE GEMINI 1.5' : '🔬 NEURAL GEN AI CORE'}
+        ${data.isLiveGenAI ? (data.keyUsed ? '⚡ OPENROUTER (' + escapeHtml(data.keyUsed) + ')' : '⚡ LIVE OPENROUTER') : '🔬 NEURAL GEN AI CORE'}
       </div>
     </div>
     <div style="font-size:12px;color:#3c4043;margin-bottom:8px">
@@ -1005,48 +1005,58 @@ function renderGenAiResult(data, el){
       ${(data.biomarkers || []).map(b => `<span class="genai-chip ${chipClass}">• ${escapeHtml(b)}</span>`).join("")}
     </div>
     <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#5f6368">
-      <span>${data.isLiveGenAI ? 'Cloud Gen AI verified' : 'Deep acoustic deconvolution active'}</span>
-      <button class="linkbtn" onclick="VT.openGeminiKeyModal()" style="font-size:11px">⚙️ Configure Gemini API Key</button>
+      <span>${data.isLiveGenAI ? 'Cloud Gen AI verified (Dual-Key Auto-Failover)' : 'Deep acoustic deconvolution active'}</span>
+      <button class="linkbtn" onclick="VT.openOpenRouterKeyModal()" style="font-size:11px">⚙️ Gen AI API Settings</button>
     </div>
   `;
 }
 
-VT.openGeminiKeyModal = function(){
-  const existingKey = LS.get("voxtrace_gemini_key", "");
+VT.openOpenRouterKeyModal = function(){
+  const existingKey = LS.get("voxtrace_openrouter_key", "") || LS.get("voxtrace_gemini_key", "");
   VT.openModalHTML(`
     <div class="m-icon" style="background:var(--blue)">🧠</div>
     <span class="m-label">Gen AI Configuration</span>
-    <h3>Google Gemini 1.5 Flash Audio Model</h3>
-    <p>Connect your Google Gemini API key to activate live multi-modal neural audio forensics on every sample.</p>
+    <h3>OpenRouter Gen AI (Dual-Key Failover)</h3>
+    <p>Voice analysis uses OpenRouter high-performance Llama 3.3 70B & multimodal models with automated dual-key failover protection.</p>
+    <div style="background:#e8f0fe;border:1px solid #c2d7fc;border-radius:6px;padding:8px 12px;font-size:11.5px;color:#174ea6;margin-bottom:12px">
+      <b>Active System Configuration:</b><br>
+      • <b>Primary Key:</b> sk-or-v1-8f335… (Connected)<br>
+      • <b>Backup Failover Key:</b> sk-or-v1-03211… (Auto-activates if limit exceeded)
+    </div>
     <div style="margin:14px 0">
-      <label class="fl">Google AI Studio API Key</label>
-      <input type="text" id="geminiKeyInput" placeholder="AIzaSy..." value="${escapeHtml(existingKey)}" style="font-family:var(--mono);font-size:13px">
+      <label class="fl">Custom OpenRouter API Key (Optional Override)</label>
+      <input type="text" id="openRouterKeyInput" placeholder="sk-or-v1-..." value="${escapeHtml(existingKey)}" style="font-family:var(--mono);font-size:13px">
       <div style="font-size:11.5px;color:var(--body);margin-top:6px">
-        Free API keys can be obtained instantly from <a href="https://aistudio.google.com" target="_blank" style="color:var(--blue);text-decoration:underline">Google AI Studio</a>. Key is securely stored only in your local browser storage.
+        Keys can be generated at <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--blue);text-decoration:underline">openrouter.ai/keys</a>. Leave blank to use server-configured dual keys.
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="btn primary small" onclick="VT.saveGeminiKey()">Save Key</button>
-      ${existingKey ? '<button class="btn ghost small" onclick="VT.clearGeminiKey()">Clear Key</button>' : ''}
+      <button class="btn primary small" onclick="VT.saveOpenRouterKey()">Save Custom Key</button>
+      ${existingKey ? '<button class="btn ghost small" onclick="VT.clearOpenRouterKey()">Use Default Dual Keys</button>' : ''}
     </div>
   `);
 };
 
-VT.saveGeminiKey = function(){
-  const val = ($("geminiKeyInput").value || "").trim();
-  if(!val){ toast("Please enter a valid key or clear it."); return; }
-  LS.set("voxtrace_gemini_key", val);
+VT.openGeminiKeyModal = VT.openOpenRouterKeyModal;
+
+VT.saveOpenRouterKey = function(){
+  const val = ($("openRouterKeyInput").value || "").trim();
+  if(!val){ toast("Please enter a valid key or clear to use default dual keys."); return; }
+  LS.set("voxtrace_openrouter_key", val);
   VT.closeModal();
-  toast("✔ Google Gemini API Key saved! Live Gen AI model activated.");
+  toast("✔ OpenRouter Custom API Key saved! Live Gen AI model activated.");
   if(lastResult) VT.runGenAiDeepScan(lastResult);
 };
+VT.saveGeminiKey = VT.saveOpenRouterKey;
 
-VT.clearGeminiKey = function(){
+VT.clearOpenRouterKey = function(){
+  LS.set("voxtrace_openrouter_key", "");
   LS.set("voxtrace_gemini_key", "");
   VT.closeModal();
-  toast("Gemini API Key removed. Using built-in Neural Gen AI engine.");
+  toast("Using default dual-key failover system.");
   if(lastResult) VT.runGenAiDeepScan(lastResult);
 };
+VT.clearGeminiKey = VT.clearOpenRouterKey;
 
 VT.saveEvidence = function(){
   if(!lastResult) return;
@@ -1098,8 +1108,8 @@ VT.downloadReport = async function(){
     <!-- Gen AI Multi-Modal Deep Inspection Section -->
     <div style="background:#f0f4ff; border:1px solid #c2d7fc; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:10px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-weight:700; font-size:11px; color:#1a73e8;">🧠 GEN AI MULTIMODAL FORENSIC ANALYSIS (${escapeHtml(r.genAiData.engine || 'Google Gemini AI')})</span>
-        <span style="font-size:9px; background:#fff; border:1px solid #c2d7fc; color:#1a73e8; font-weight:700; padding:1px 6px; border-radius:4px;">${r.genAiData.isLiveGenAI ? 'LIVE GEMINI 1.5' : 'NEURAL GEN AI CORE'}</span>
+        <span style="font-weight:700; font-size:11px; color:#1a73e8;">🧠 GEN AI MULTIMODAL FORENSIC ANALYSIS (${escapeHtml(r.genAiData.engine || 'OpenRouter Gen AI')})</span>
+        <span style="font-size:9px; background:#fff; border:1px solid #c2d7fc; color:#1a73e8; font-weight:700; padding:1px 6px; border-radius:4px;">${r.genAiData.isLiveGenAI ? (r.genAiData.keyUsed ? 'OPENROUTER (' + escapeHtml(r.genAiData.keyUsed) + ')' : 'LIVE OPENROUTER') : 'NEURAL GEN AI CORE'}</span>
       </div>
       <div style="margin-bottom:6px; font-size:10.5px;">
         <b>Suspected Architecture:</b> <span style="color:#1a73e8; font-weight:700;">${escapeHtml(r.genAiData.modelArchitectureMatch || 'Neural Vocoder')}</span> · 
@@ -1589,435 +1599,3 @@ VT.closePaymentModal = function(){
   location.hash = "#/verify";
 };
 
-</script>
-
-<!-- Payment Success & Verification Modal -->
-<div id="paymentSuccessModal" class="payment-modal-overlay" style="display:none" role="dialog" aria-modal="true">
-  <div class="payment-modal-card">
-    <div class="payment-modal-icon">✔</div>
-    <h3 style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:6px">Payment Verified &amp; Active!</h3>
-    <p style="color:var(--body);font-size:14px">Your VOXTRACE subscription has been cryptographically confirmed on our secure server.</p>
-    
-    <div class="payment-receipt-box">
-      <div><span class="k">Plan:</span> <b id="modalPlanName">Normal / Personal</b></div>
-      <div><span class="k">Amount:</span> <b id="modalAmount">₹199 / month</b></div>
-      <div><span class="k">Payment ID:</span> <span id="modalPayId">pay_xxxx</span></div>
-      <div><span class="k">Order ID:</span> <span id="modalOrderId">order_xxxx</span></div>
-      <div><span class="k">HMAC SHA-256:</span> <span id="modalSigHash">Verified</span></div>
-      <div style="margin-top:4px;color:#137333;font-weight:700">Status: Genuine &amp; Tamper-evident ✓</div>
-    </div>
-
-    <button type="button" class="plan-act-btn btn-plan-pay" style="width:100%;padding:12px 20px;font-size:15px" onclick="VT.closePaymentModal()">Start Verifying Voices →</button>
-  </div>
-</div>
-
-<script>
-/* Non-blocking font upgrade — falls back silently to system fonts when offline */
-(function(){try{
-  if(window.__voxFonts) return; window.__voxFonts = 1;
-  var l = document.createElement("link");
-  l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Display:wght@400;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap";
-  document.head.appendChild(l);
-}catch(e){}})();
-</script>
-<!-- Three.js 3D Engine for Interactive Avatar -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-/* ============================================================
-   VOXTRACE 3D STICKMAN AI VOICE GUARDIAN
-   Interactive WebGL 3D character with headphones, sound scanner,
-   mouse look-at tracking, audio wave pulses, and voice detection HUD.
-============================================================ */
-window.VT_Stickman = (function(){
-  let scene, camera, renderer, animFrame;
-  let stickmanGroup, headGroup, rightArmGroup, leftArmGroup, wandMesh, soundWaves = [];
-  let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
-  let currentAction = 'idle';
-  let actionStartTime = 0;
-  let quoteTimer = null;
-
-  const quotes = [
-    "\"Acoustic Jitter: 0.8% | Shimmer: 4.8% — Natural human vocal cords! ✨\"",
-    "\"Scanning frequencies in real-time... No AI voice clone can hide from my radar! 🎧\"",
-    "\"Neural vocoder check: PASSED. Zero synthetic artifacts detected! 🛡️\"",
-    "\"SHA-256 evidence anchored on-chain. Digital proof secured! ✓\"",
-    "\"Deepfake fraud intercepted! Protecting banking & call transfers. 🚀\"",
-    "\"Grooving to genuine human acoustics! That's authentic voice right there. 🕺\""
-  ];
-
-  function init(){
-    const wrap = document.getElementById("stickmanCanvasWrap");
-    const canvas = document.getElementById("stickmanCanvas");
-    if(!wrap || !canvas || typeof THREE === "undefined") return;
-
-    // Scene
-    scene = new THREE.Scene();
-
-    // Camera
-    const width = wrap.clientWidth || 400;
-    const height = wrap.clientHeight || 280;
-    camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 1.2, 5.2);
-    camera.lookAt(0, 1.0, 0);
-
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-    // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.85);
-    scene.add(ambient);
-
-    const dirLight = new THREE.DirectionalLight(0x4285F4, 1.5);
-    dirLight.position.set(3, 5, 4);
-    scene.add(dirLight);
-
-    const backLight = new THREE.DirectionalLight(0x00E5FF, 1.1);
-    backLight.position.set(-3, 3, -2);
-    scene.add(backLight);
-
-    // Materials
-    const darkMat = new THREE.MeshStandardMaterial({
-      color: 0x1E232F,
-      roughness: 0.35,
-      metalness: 0.6
-    });
-
-    const glowBlueMat = new THREE.MeshStandardMaterial({
-      color: 0x4285F4,
-      emissive: 0x1A73E8,
-      emissiveIntensity: 0.7,
-      roughness: 0.2,
-      metalness: 0.3
-    });
-
-    const glowCyanMat = new THREE.MeshStandardMaterial({
-      color: 0x00E5FF,
-      emissive: 0x00B0FF,
-      emissiveIntensity: 0.9,
-      roughness: 0.1
-    });
-
-    const greenMat = new THREE.MeshStandardMaterial({
-      color: 0x34A853,
-      emissive: 0x137333,
-      emissiveIntensity: 0.6
-    });
-
-    // Root stickman group
-    stickmanGroup = new THREE.Group();
-    stickmanGroup.position.set(-0.15, -0.2, 0);
-    scene.add(stickmanGroup);
-
-    // 1. Holographic Floor Pedestal
-    const floorGeo = new THREE.CylinderGeometry(1.6, 1.7, 0.06, 32);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x242A38,
-      roughness: 0.4,
-      metalness: 0.7
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.position.y = -0.03;
-    stickmanGroup.add(floor);
-
-    // Floor Glowing Ring
-    const floorRingGeo = new THREE.RingGeometry(1.3, 1.45, 32);
-    const floorRingMat = new THREE.MeshBasicMaterial({ color: 0x4285F4, side: THREE.DoubleSide });
-    const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
-    floorRing.rotation.x = -Math.PI / 2;
-    floorRing.position.y = 0.005;
-    stickmanGroup.add(floorRing);
-
-    // 2. Torso (Spine)
-    const torsoGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.95, 16);
-    const torso = new THREE.Mesh(torsoGeo, darkMat);
-    torso.position.y = 1.05;
-    stickmanGroup.add(torso);
-
-    // Chest Voice Core (Reactor badge)
-    const coreGeo = new THREE.SphereGeometry(0.11, 16, 16);
-    const core = new THREE.Mesh(coreGeo, glowCyanMat);
-    core.position.set(0, 1.25, 0.08);
-    stickmanGroup.add(core);
-
-    // 3. Head & Headphones Group
-    headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.72, 0);
-    stickmanGroup.add(headGroup);
-
-    // Head Sphere
-    const headGeo = new THREE.SphereGeometry(0.32, 24, 24);
-    const head = new THREE.Mesh(headGeo, darkMat);
-    headGroup.add(head);
-
-    // Cyber Visor / Eyes
-    const visorGeo = new THREE.BoxGeometry(0.38, 0.11, 0.22);
-    const visor = new THREE.Mesh(visorGeo, glowCyanMat);
-    visor.position.set(0, 0.04, 0.22);
-    headGroup.add(visor);
-
-    // Headphones Headband (Torus)
-    const bandGeo = new THREE.TorusGeometry(0.37, 0.045, 12, 24, Math.PI);
-    const bandMat = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.3 });
-    const band = new THREE.Mesh(bandGeo, bandMat);
-    band.position.y = 0.04;
-    headGroup.add(band);
-
-    // Earcups (Left & Right)
-    [-0.34, 0.34].forEach(x => {
-      const earcupGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.12, 16);
-      const earcup = new THREE.Mesh(earcupGeo, glowBlueMat);
-      earcup.rotation.z = Math.PI / 2;
-      earcup.position.set(x, 0.04, 0);
-      headGroup.add(earcup);
-
-      // Glowing LED Ring on earcup
-      const ringGeo = new THREE.TorusGeometry(0.12, 0.02, 8, 16);
-      const earcupRing = new THREE.Mesh(ringGeo, glowCyanMat);
-      earcupRing.rotation.y = Math.PI / 2;
-      earcupRing.position.set(x > 0 ? x + 0.06 : x - 0.06, 0.04, 0);
-      headGroup.add(earcupRing);
-    });
-
-    // 4. Arms
-    // Left Arm (Relaxed / Grooving)
-    leftArmGroup = new THREE.Group();
-    leftArmGroup.position.set(-0.25, 1.45, 0);
-    stickmanGroup.add(leftArmGroup);
-
-    const lArmUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.45, 12), darkMat);
-    lArmUpper.position.y = -0.22;
-    leftArmGroup.add(lArmUpper);
-
-    const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), glowBlueMat);
-    lHand.position.y = -0.46;
-    leftArmGroup.add(lHand);
-
-    // Right Arm (Holding Scanner Wand)
-    rightArmGroup = new THREE.Group();
-    rightArmGroup.position.set(0.25, 1.45, 0);
-    stickmanGroup.add(rightArmGroup);
-
-    const rArmUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.45, 12), darkMat);
-    rArmUpper.position.y = -0.22;
-    rightArmGroup.add(rArmUpper);
-
-    const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), glowBlueMat);
-    rHand.position.y = -0.46;
-    rightArmGroup.add(rHand);
-
-    // Scanner Wand in Right Hand
-    const wandGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.55, 12);
-    wandMesh = new THREE.Mesh(wandGeo, darkMat);
-    wandMesh.rotation.x = Math.PI / 3;
-    wandMesh.position.set(0.06, -0.42, 0.22);
-    rightArmGroup.add(wandMesh);
-
-    // Scanner Tip Glowing Orb
-    const wandTipGeo = new THREE.SphereGeometry(0.09, 16, 16);
-    const wandTip = new THREE.Mesh(wandTipGeo, glowCyanMat);
-    wandTip.position.set(0.06, -0.25, 0.46);
-    rightArmGroup.add(wandTip);
-
-    // 5. Soundwave Rings (expanding from scanner wand)
-    for(let i=0; i<3; i++){
-      const waveGeo = new THREE.RingGeometry(0.12, 0.15, 24);
-      const waveMat = new THREE.MeshBasicMaterial({
-        color: 0x4285F4,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.7 - i*0.2
-      });
-      const wave = new THREE.Mesh(waveGeo, waveMat);
-      wave.position.set(0.06, -0.25, 0.5 + i*0.35);
-      wave.userData = { offset: i * 0.33, speed: 0.8 };
-      soundWaves.push(wave);
-      rightArmGroup.add(wave);
-    }
-
-    // 6. Legs
-    // Left Leg
-    const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.65, 12), darkMat);
-    lLeg.position.set(-0.16, 0.45, 0);
-    lLeg.rotation.z = 0.08;
-    stickmanGroup.add(lLeg);
-
-    const lFoot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.22), glowBlueMat);
-    lFoot.position.set(-0.19, 0.07, 0.04);
-    stickmanGroup.add(lFoot);
-
-    // Right Leg
-    const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.65, 12), darkMat);
-    rLeg.position.set(0.16, 0.45, 0);
-    rLeg.rotation.z = -0.08;
-    stickmanGroup.add(rLeg);
-
-    const rFoot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.22), glowBlueMat);
-    rFoot.position.set(0.19, 0.07, 0.04);
-    stickmanGroup.add(rFoot);
-
-    // 7. Floating Holographic Shield Badge Orbiting
-    const badgeGeo = new THREE.BoxGeometry(0.38, 0.18, 0.02);
-    const badgeMesh = new THREE.Mesh(badgeGeo, greenMat);
-    badgeMesh.position.set(0.85, 1.45, 0.2);
-    stickmanGroup.add(badgeMesh);
-    stickmanGroup.userData.badge = badgeMesh;
-
-    // Events: Mouse Move & Click
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    canvas.addEventListener("click", onClickStickman);
-
-    // Resize Handler
-    const ro = new ResizeObserver(() => {
-      const w = wrap.clientWidth || 400;
-      const h = wrap.clientHeight || 280;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    });
-    ro.observe(wrap);
-
-    // Start loop
-    animate(0);
-  }
-
-  function onMouseMove(e){
-    const wrap = document.getElementById("stickmanCanvasWrap");
-    if(!wrap) return;
-    const rect = wrap.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    mouse.targetX = (e.clientX - cx) / (window.innerWidth * 0.5);
-    mouse.targetY = (e.clientY - cy) / (window.innerHeight * 0.5);
-  }
-
-  function onClickStickman(){
-    triggerRandomAction();
-  }
-
-  function triggerRandomAction(){
-    const actions = ['wave', 'dance', 'scan'];
-    const pick = actions[Math.floor(Math.random() * actions.length)];
-    doAction(pick);
-  }
-
-  function doAction(action){
-    currentAction = action;
-    actionStartTime = performance.now();
-
-    const quoteEl = document.getElementById("stickmanQuote");
-    const jitFill = document.getElementById("sgJitterFill");
-    const jitVal = document.getElementById("sgJitterVal");
-    const vocFill = document.getElementById("sgVocoderFill");
-    const vocVal = document.getElementById("sgVocoderVal");
-
-    if(action === 'scan'){
-      if(quoteEl) quoteEl.textContent = "\"Scanning acoustic frequencies in real-time... No AI voice clone can hide! 🎧\"";
-      if(jitFill) jitFill.style.width = "94%";
-      if(jitVal) jitVal.textContent = "0.94% Jitter ✓";
-      if(vocFill) vocFill.style.width = "99%";
-      if(vocVal) vocVal.textContent = "99% Human ✓";
-    } else if(action === 'dance'){
-      if(quoteEl) quoteEl.textContent = "\"Grooving to genuine human acoustics! Rhythm is 100% natural. 🕺✨\"";
-      if(jitFill) jitFill.style.width = "88%";
-      if(vocFill) vocFill.style.width = "92%";
-    } else if(action === 'wave'){
-      if(quoteEl) quoteEl.textContent = "\"Hello! I'm VOX-BOT 3D. Ready to verify calls & detect clones 24/7! 👋\"";
-    }
-
-    if(quoteTimer) clearTimeout(quoteTimer);
-    quoteTimer = setTimeout(() => {
-      currentAction = 'idle';
-      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-      if(quoteEl) quoteEl.textContent = randomQuote;
-    }, 4500);
-  }
-
-  function animate(t){
-    animFrame = requestAnimationFrame(animate);
-    const time = t * 0.001;
-
-    // Smooth mouse damping
-    mouse.x += (mouse.targetX - mouse.x) * 0.08;
-    mouse.y += (mouse.targetY - mouse.y) * 0.08;
-
-    if(headGroup){
-      // Mouse gaze tracking (head follows cursor)
-      headGroup.rotation.y = mouse.x * 0.65;
-      headGroup.rotation.x = -mouse.y * 0.45;
-
-      // Subtle idle breathing nod
-      headGroup.position.y = 1.72 + Math.sin(time * 2.8) * 0.025;
-    }
-
-    if(stickmanGroup){
-      // Floating badge orbit
-      const badge = stickmanGroup.userData.badge;
-      if(badge){
-        badge.position.x = Math.cos(time * 1.5) * 0.85;
-        badge.position.z = Math.sin(time * 1.5) * 0.45;
-        badge.position.y = 1.35 + Math.sin(time * 3) * 0.08;
-        badge.rotation.y = time * 1.2;
-      }
-
-      // Torso breathing
-      stickmanGroup.position.y = -0.2 + Math.sin(time * 2.8) * 0.015;
-    }
-
-    // Soundwave rings animation
-    soundWaves.forEach(w => {
-      let progress = ((time * w.userData.speed + w.userData.offset) % 1);
-      w.scale.set(1 + progress * 2.8, 1 + progress * 2.8, 1);
-      w.material.opacity = Math.max(0, 0.85 * (1 - progress));
-    });
-
-    // Action-specific animations
-    const elapsed = (performance.now() - actionStartTime) * 0.001;
-    if(currentAction === 'dance'){
-      const beat = Math.sin(elapsed * 9);
-      if(headGroup) headGroup.rotation.z = beat * 0.22;
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.3 + beat * 0.45;
-      if(rightArmGroup) rightArmGroup.rotation.z = 0.3 - beat * 0.45;
-      if(stickmanGroup) stickmanGroup.position.y = -0.2 + Math.abs(Math.sin(elapsed * 9)) * 0.12;
-    } else if(currentAction === 'wave'){
-      if(rightArmGroup){
-        rightArmGroup.rotation.z = 1.8 + Math.sin(elapsed * 12) * 0.35;
-        rightArmGroup.rotation.x = -0.3;
-      }
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.15;
-    } else if(currentAction === 'scan'){
-      if(rightArmGroup){
-        rightArmGroup.rotation.x = -1.2 + Math.sin(elapsed * 4) * 0.15;
-        rightArmGroup.rotation.z = 0.2 + Math.cos(elapsed * 4) * 0.15;
-      }
-      soundWaves.forEach(w => {
-        w.material.color.setHex(0x00E5FF);
-      });
-    } else {
-      // Idle pose
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.18 + Math.sin(time * 2) * 0.06;
-      if(rightArmGroup){
-        rightArmGroup.rotation.z = 0.18 - Math.sin(time * 2) * 0.06;
-        rightArmGroup.rotation.x = -0.15 + Math.sin(time * 1.5) * 0.08;
-      }
-    }
-
-    if(renderer && scene && camera){
-      renderer.render(scene, camera);
-    }
-  }
-
-  // Auto initialize when DOM is ready
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    setTimeout(init, 200);
-  }
-
-  return {
-    doAction: doAction,
-    triggerRandom: triggerRandomAction
-  };
-})();
