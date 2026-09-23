@@ -112,37 +112,51 @@ button{font-family:inherit}
   font-size:clamp(12px,1.2vw,14px);color:var(--ink);display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(18,19,23,.06)}
 .hchip i{width:10px;height:10px;border-radius:50%;display:inline-block}
 
-/* ============ 3D STICKMAN GUARDIAN STAGE ============ */
-.stickman-guardian-card{background:var(--white);border-radius:28px;box-shadow:0 20px 48px rgba(18,19,23,.12);border:1px solid var(--light-blue);overflow:hidden;position:relative}
-.sg-header{padding:14px 22px;border-bottom:1px solid var(--light-blue);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:linear-gradient(180deg,#F8FAFF 0%,#FFFFFF 100%)}
-.sg-badge{font-size:12.5px;font-weight:800;color:var(--blue);letter-spacing:.08em;display:flex;align-items:center;gap:8px}
-.sg-pulse{width:9px;height:9px;border-radius:50%;background:#34A853;box-shadow:0 0 10px #34A853;animation:pulse 1.5s infinite}
-.sg-tagline{font-size:12px;font-weight:600;color:var(--body)}
-.sg-stage-container{display:grid;grid-template-columns:1.2fr 0.8fr;align-items:center;min-height:280px;background:radial-gradient(circle at 40% 50%,#EFF6FF 0%,#F8FAFD 65%,#FFFFFF 100%);position:relative;overflow:hidden}
-@media (max-width:768px){.sg-stage-container{grid-template-columns:1fr}}
-.sg-canvas-wrap{width:100%;height:280px;position:relative;cursor:grab}
+/* ============ 3D STICKMAN & CYBER DETECTIVE GUARDIAN STAGE ============ */
+.stickman-guardian-card{background:#090E1B;border-radius:28px;box-shadow:0 24px 64px rgba(0,0,0,.45),0 0 0 1.5px rgba(0,229,255,.22);overflow:hidden;position:relative}
+.sg-header{padding:16px 26px;border-bottom:1px solid rgba(0,229,255,.18);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:linear-gradient(90deg,#0a1329 0%,#111e3b 50%,#0a1329 100%)}
+.sg-badge{font-size:13.5px;font-weight:800;color:#00E5FF;letter-spacing:.09em;display:flex;align-items:center;gap:9px;text-shadow:0 0 14px rgba(0,229,255,.45)}
+.sg-pulse{width:10px;height:10px;border-radius:50%;background:#00E5FF;box-shadow:0 0 14px #00E5FF;animation:sgPulse 1.4s infinite}
+@keyframes sgPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.5}}
+.sg-tagline{font-size:12px;font-weight:600;color:#94A8C8;display:flex;align-items:center;gap:12px}
+.sg-tagline .sg-status-chip{background:rgba(0,229,255,0.12);color:#00E5FF;border:1px solid rgba(0,229,255,0.3);padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em}
+.sg-stage-container{display:grid;grid-template-columns:1.35fr 0.95fr;align-items:stretch;min-height:480px;background:radial-gradient(circle at 45% 45%,#101c3b 0%,#0a1226 55%,#050812 100%);background-image:radial-gradient(circle at 45% 45%,#101c3b 0%,#0a1226 55%,#050812 100%),linear-gradient(rgba(0,229,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.035) 1px,transparent 1px);background-size:100% 100%,32px 32px,32px 32px;position:relative;overflow:hidden}
+@media (max-width:860px){.sg-stage-container{grid-template-columns:1fr;min-height:auto}}
+.sg-canvas-wrap{width:100%;height:480px;position:relative;cursor:grab}
+@media (max-width:860px){.sg-canvas-wrap{height:360px}}
 .sg-canvas-wrap:active{cursor:grabbing}
 .sg-canvas-wrap canvas{width:100%!important;height:100%!important;display:block}
-.sg-canvas-hint{position:absolute;bottom:10px;left:18px;font-size:11px;font-weight:600;color:#70757a;background:rgba(255,255,255,0.9);padding:4px 10px;border-radius:999px;pointer-events:none;border:1px solid rgba(0,0,0,0.06);backdrop-filter:blur(4px)}
-.sg-hud-panel{padding:18px 22px;display:flex;flex-direction:column;gap:12px;border-left:1px solid rgba(210,227,252,.5)}
-@media (max-width:768px){.sg-hud-panel{border-left:none;border-top:1px solid var(--light-blue)}}
-.sg-speech-bubble{background:var(--ink);color:#fff;border-radius:14px;padding:12px 16px;position:relative;box-shadow:0 8px 20px rgba(0,0,0,.15);animation:floatSubtle 3s ease-in-out infinite}
-.sg-speech-bubble::before{content:"";position:absolute;left:-8px;top:50%;transform:translateY(-50%);border-width:8px 8px 8px 0;border-style:solid;border-color:transparent var(--ink) transparent transparent}
-@media (max-width:768px){.sg-speech-bubble::before{left:24px;top:-8px;transform:none;border-width:0 8px 8px 8px;border-color:transparent transparent var(--ink) transparent}}
-.sg-sb-tag{font-size:10px;font-weight:800;color:#8ab4f8;letter-spacing:.1em;margin-bottom:4px}
-.sg-sb-text{font-size:13px;line-height:1.45;font-weight:500}
-.sg-live-meters{display:flex;flex-direction:column;gap:7px;background:var(--white);padding:11px 13px;border-radius:12px;border:1px solid var(--light-blue)}
-.sg-meter{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600}
-.sg-m-label{width:115px;color:var(--body);white-space:nowrap}
-.sg-m-bar{flex:1;height:6px;background:#E8F0FE;border-radius:999px;overflow:hidden}
-.sg-m-fill{height:100%;border-radius:999px;background:#34A853;transition:width .4s ease}
-.sg-m-blue{background:#4285F4}
-.sg-m-val{font-size:11px;font-weight:700;color:var(--ink);min-width:68px;text-align:right}
-.sg-controls{display:flex;gap:8px;flex-wrap:wrap}
-.sg-btn{background:var(--white);border:1.5px solid var(--light-blue);color:var(--ink);font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;transition:all .15s ease}
-.sg-btn:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px)}
-.sg-btn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
-.sg-btn-primary:hover{background:var(--blue-dark);color:#fff}
+.sg-canvas-hint{position:absolute;bottom:14px;left:20px;font-size:11.5px;font-weight:600;color:#9bb8e8;background:rgba(8,14,28,0.85);padding:5px 14px;border-radius:999px;pointer-events:none;border:1px solid rgba(0,229,255,0.28);backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+.sg-hud-panel{padding:22px 24px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;border-left:1px solid rgba(0,229,255,.18);background:rgba(8,13,26,0.85);backdrop-filter:blur(14px)}
+@media (max-width:860px){.sg-hud-panel{border-left:none;border-top:1px solid rgba(0,229,255,.18);padding:18px 20px}}
+.sg-speech-bubble{background:linear-gradient(135deg,rgba(26,115,232,0.22) 0%,rgba(10,21,46,0.94) 100%);border:1px solid rgba(0,229,255,0.35);color:#fff;border-radius:15px;padding:14px 17px;position:relative;box-shadow:0 10px 28px rgba(0,0,0,.4);animation:floatSubtle 3.5s ease-in-out infinite}
+.sg-speech-bubble::before{content:"";position:absolute;left:-9px;top:50%;transform:translateY(-50%);border-width:9px 9px 9px 0;border-style:solid;border-color:transparent rgba(0,229,255,0.35) transparent transparent}
+@media (max-width:860px){.sg-speech-bubble::before{left:24px;top:-9px;transform:none;border-width:0 9px 9px 9px;border-color:transparent transparent rgba(0,229,255,0.35) transparent}}
+.sg-sb-tag{font-size:10.5px;font-weight:800;color:#00E5FF;letter-spacing:.12em;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
+.sg-sb-text{font-size:13.5px;line-height:1.5;font-weight:500;color:#f0f4fc}
+.sg-live-meters{display:flex;flex-direction:column;gap:8px;background:rgba(14,23,45,0.9);border:1px solid rgba(0,229,255,0.2);padding:14px 16px;border-radius:14px;box-shadow:inset 0 2px 8px rgba(0,0,0,0.3)}
+.sg-meter{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:600}
+.sg-m-label{width:125px;color:#94A8C8;white-space:nowrap}
+.sg-m-bar{flex:1;height:7px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.5)}
+.sg-m-fill{height:100%;border-radius:999px;background:#00E676;box-shadow:0 0 8px #00E676;transition:width .45s ease}
+.sg-m-blue{background:#00E5FF;box-shadow:0 0 8px #00E5FF}
+.sg-m-amber{background:#FFB300;box-shadow:0 0 8px #FFB300}
+.sg-m-val{font-size:11.5px;font-weight:700;color:#e8f0fe;min-width:72px;text-align:right}
+.sg-oscilloscope-wrap{background:#040711;border:1px solid rgba(0,229,255,0.25);border-radius:8px;padding:8px 10px;margin-top:2px}
+.sg-osc-head{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#00E5FF;font-weight:700;letter-spacing:.08em;margin-bottom:4px}
+#sgOscCanvas{width:100%;height:38px;display:block}
+.sg-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sg-btn{background:rgba(18,29,54,0.9);border:1.5px solid rgba(0,229,255,0.3);color:#e2ecfc;font-size:12px;font-weight:700;padding:8px 13px;border-radius:9px;cursor:pointer;transition:all .18s ease;display:inline-flex;align-items:center;gap:6px;box-shadow:0 3px 10px rgba(0,0,0,0.25)}
+.sg-btn:hover{border-color:#00E5FF;color:#00E5FF;box-shadow:0 0 14px rgba(0,229,255,0.35);transform:translateY(-1.5px)}
+.sg-btn-cyan{background:linear-gradient(135deg,#00E5FF 0%,#0091EA 100%);border-color:#00E5FF;color:#001E3C;font-weight:800;text-shadow:none}
+.sg-btn-cyan:hover{background:linear-gradient(135deg,#18ffff 0%,#00b0ff 100%);color:#001E3C;box-shadow:0 0 18px rgba(0,229,255,0.6)}
+.sg-btn-emerald{border-color:rgba(0,230,118,0.4);color:#69f0ae}
+.sg-btn-emerald:hover{border-color:#00E676;color:#00E676;box-shadow:0 0 14px rgba(0,230,118,0.35)}
+.sg-btn-amber{border-color:rgba(255,179,0,0.4);color:#ffe082}
+.sg-btn-amber:hover{border-color:#FFB300;color:#FFB300;box-shadow:0 0 14px rgba(255,179,0,0.35)}
+.sg-btn-purple{border-color:rgba(179,136,255,0.4);color:#d1c4e9}
+.sg-btn-purple:hover{border-color:#B388FF;color:#B388FF;box-shadow:0 0 14px rgba(179,136,255,0.35)}
+.sg-btn-mute{margin-left:auto;padding:8px 10px;font-size:11px;border-color:rgba(255,255,255,0.15);color:#94A8C8}
 @keyframes floatSubtle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
 /* ============ ABOUT ============ */
@@ -639,51 +653,73 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
       <div class="hero-visual">
         <div class="stickman-guardian-card">
           <div class="sg-header">
-            <div class="sg-badge"><span class="sg-pulse"></span> 3D AI VOICE GUARDIAN &amp; DETECTIVE</div>
-            <div class="sg-tagline">Interactive 3D Avatar · Real-Time Acoustic Radar · Move Mouse &amp; Click</div>
+            <div class="sg-badge"><span class="sg-pulse"></span> 3D AI VOICE GUARDIAN &amp; FORENSIC DETECTIVE</div>
+            <div class="sg-tagline">
+              <span class="sg-status-chip">⚡ CYBER-FORENSICS ACTIVE</span>
+              <span>Interactive 3D WebGL Avatar · Real-Time Acoustic Radar · Move Mouse To Track</span>
+            </div>
           </div>
 
           <div class="sg-stage-container">
             <!-- 3D Canvas Box -->
             <div id="stickmanCanvasWrap" class="sg-canvas-wrap">
               <canvas id="stickmanCanvas"></canvas>
-              <div id="stickmanHint" class="sg-canvas-hint">🎧 Move mouse to guide his gaze · Click to test!</div>
+              <div id="stickmanHint" class="sg-canvas-hint">🎧 Move mouse to guide gaze · Click avatar or buttons to scan!</div>
             </div>
 
-            <!-- Stickman Cyber HUD -->
+            <!-- Cyber Detective HUD -->
             <div class="sg-hud-panel">
               <div class="sg-speech-bubble" id="stickmanSpeech">
-                <div class="sg-sb-tag">VOX-BOT 3D · FORENSIC GUARDIAN</div>
+                <div class="sg-sb-tag">
+                  <span>VOX-BOT 3D · CHIEF FORENSIC DETECTIVE</span>
+                  <span id="sgActionBadge" style="color:#00E5FF;font-weight:700">RADAR ACTIVE</span>
+                </div>
                 <div id="stickmanQuote" class="sg-sb-text">"Scanning acoustic frequencies in real-time... No AI voice clone can hide from my radar! 🎧"</div>
+              </div>
+
+              <!-- Live Mini Audio Oscilloscope -->
+              <div class="sg-oscilloscope-wrap">
+                <div class="sg-osc-head">
+                  <span>LIVE GLOTTAL OSCILLOSCOPE</span>
+                  <span id="sgOscFreq" style="color:#00E676;font-family:var(--mono)">142.8 Hz · STABLE</span>
+                </div>
+                <canvas id="sgOscCanvas" width="300" height="42"></canvas>
               </div>
 
               <div class="sg-live-meters">
                 <div class="sg-meter">
                   <span class="sg-m-label">Vocal Jitter Radar</span>
-                  <div class="sg-m-bar"><div class="sg-m-fill" id="sgJitterFill" style="width: 84%;"></div></div>
-                  <span class="sg-m-val" id="sgJitterVal">0.84% Human</span>
+                  <div class="sg-m-bar"><div class="sg-m-fill" id="sgJitterFill" style="width: 86%;"></div></div>
+                  <span class="sg-m-val" id="sgJitterVal">0.86% Human</span>
                 </div>
                 <div class="sg-meter">
-                  <span class="sg-m-label">Vocoder Roll-off</span>
-                  <div class="sg-m-bar"><div class="sg-m-fill sg-m-blue" id="sgVocoderFill" style="width: 96%;"></div></div>
-                  <span class="sg-m-val" id="sgVocoderVal">96% Clean</span>
+                  <span class="sg-m-label">Vocoder Phase Artifacts</span>
+                  <div class="sg-m-bar"><div class="sg-m-fill sg-m-blue" id="sgVocoderFill" style="width: 98%;"></div></div>
+                  <span class="sg-m-val" id="sgVocoderVal">98% Clean</span>
                 </div>
                 <div class="sg-meter">
-                  <span class="sg-m-label">SHA-256 Shield</span>
-                  <div class="sg-m-bar"><div class="sg-m-fill sg-m-green" style="width: 100%;"></div></div>
-                  <span class="sg-m-val">Secured ✓</span>
+                  <span class="sg-m-label">Formant Inertia Tracking</span>
+                  <div class="sg-m-bar"><div class="sg-m-fill sg-m-amber" id="sgFormantFill" style="width: 92%;"></div></div>
+                  <span class="sg-m-val" id="sgFormantVal">68ms Organic</span>
+                </div>
+                <div class="sg-meter">
+                  <span class="sg-m-label">SHA-256 Hash Evidence</span>
+                  <div class="sg-m-bar"><div class="sg-m-fill sg-m-fill" style="width: 100%;"></div></div>
+                  <span class="sg-m-val" style="color:#00E676">Secured ✓</span>
                 </div>
               </div>
 
               <div class="sg-controls">
-                <button type="button" class="sg-btn" onclick="VT_Stickman.doAction('wave')">👋 Wave</button>
-                <button type="button" class="sg-btn" onclick="VT_Stickman.doAction('dance')">🕺 Beat Groove</button>
-                <button type="button" class="sg-btn sg-btn-primary" onclick="VT_Stickman.doAction('scan')">🔍 Laser Scan</button>
+                <button type="button" class="sg-btn sg-btn-cyan" onclick="VT_Stickman.doAction('scan')">🔍 Laser Deep-Scan</button>
+                <button type="button" class="sg-btn sg-btn-emerald" onclick="VT_Stickman.doAction('shield')">🛡️ Force Shield</button>
+                <button type="button" class="sg-btn sg-btn-amber" onclick="VT_Stickman.doAction('interrogate')">🎧 Interrogate</button>
+                <button type="button" class="sg-btn sg-btn-purple" onclick="VT_Stickman.doAction('dance')">🕺 Beat Groove</button>
+                <button type="button" class="sg-btn sg-btn-mute" id="sgSoundBtn" onclick="VT_Stickman.toggleSound()" title="Toggle High-Tech Sci-Fi Sound FX">🔊 SFX: ON</button>
               </div>
             </div>
           </div>
 
-          <div class="wave-strip" style="margin:0;border-radius:0;border:none;border-top:1px solid var(--light-blue);box-shadow:none;padding:16px 22px 12px;">
+          <div class="wave-strip" style="margin:0;border-radius:0;border:none;border-top:1px solid rgba(0,229,255,.18);background:#070B16;box-shadow:none;padding:16px 24px 14px;">
             <svg viewBox="0 0 1200 90" preserveAspectRatio="none" aria-hidden="true" style="height:75px;">
               <polyline id="heroWave" fill="none" stroke="#4285F4" stroke-width="2.4" opacity="0.9"/>
               <polyline id="heroWave2" fill="none" stroke="#D2E3FC" stroke-width="2" opacity="1"/>
@@ -2909,20 +2945,163 @@ VT.closePaymentModal = function(){
 ============================================================ */
 window.VT_Stickman = (function(){
   let scene, camera, renderer, animFrame;
-  let stickmanGroup, headGroup, rightArmGroup, leftArmGroup, wandMesh, soundWaves = [];
+  let stickmanGroup, headGroup, rightArmGroup, leftArmGroup, wandMesh, laserBeamMesh, forceShieldMesh;
+  let soundWaves = [], orbitRings = [], particles = [], dataBars = [];
+  let scannerLight, coreLight;
   let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
   let currentAction = 'idle';
   let actionStartTime = 0;
   let quoteTimer = null;
+  let audioCtx = null;
+  let soundEnabled = true;
+
+  // Mini Glottal Oscilloscope
+  let oscAnimFrame, oscCtx;
 
   const quotes = [
-    "\"Acoustic Jitter: 0.8% | Shimmer: 4.8% — Natural human vocal cords! ✨\"",
-    "\"Scanning frequencies in real-time... No AI voice clone can hide from my radar! 🎧\"",
-    "\"Neural vocoder check: PASSED. Zero synthetic artifacts detected! 🛡️\"",
-    "\"SHA-256 evidence anchored on-chain. Digital proof secured! ✓\"",
-    "\"Deepfake fraud intercepted! Protecting banking & call transfers. 🚀\"",
-    "\"Grooving to genuine human acoustics! That's authentic voice right there. 🕺\""
+    "\"Acoustic Jitter: 0.84% | Shimmer: 4.2% — Biological human vocal cords verified! ✨\"",
+    "\"Scanning 360° acoustic frequencies... No synthetic neural voice clone can hide! 🎧\"",
+    "\"Neural vocoder deconvolution: CLEAN. Phase patterns match organic laryngeal phonation. 🛡️\"",
+    "\"SHA-256 evidence block anchored on-chain. Court-admissible proof secured! ✓\"",
+    "\"CEO voice scam attempt intercepted! Digital signature check failed for caller. 🚀\"",
+    "\"Grooving to genuine human acoustics! That vocal timbre is 100% natural. 🕺\"",
+    "\"Frequency spectrum analysis active. High-frequency roll-off indicates authentic microphone input. 🔍\""
   ];
+
+  // Sound Synthesizer via Web Audio API (Offline, Zero External Assets)
+  function initAudio(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    if(audioCtx && audioCtx.state === "suspended"){
+      audioCtx.resume();
+    }
+  }
+
+  function playSfx(type){
+    if(!soundEnabled) return;
+    try {
+      initAudio();
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      if(type === 'scan'){
+        // Sci-Fi frequency sweep
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(1800, now + 0.18);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.35);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if(type === 'shield'){
+        // Resonant force field hum
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(240, now + 0.1);
+        osc.frequency.setValueAtTime(160, now + 0.4);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.6);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      } else if(type === 'interrogate'){
+        // High-tech investigation chime
+        [587.33, 880, 1174.66].forEach((f, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(f, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.06, now + idx * 0.08);
+          gain.gain.linearRampToValueAtTime(0, now + idx * 0.08 + 0.25);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.25);
+        });
+      } else if(type === 'dance'){
+        // Rhythmic sub-bass beat pulse
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.2);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.25);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+    } catch(e){}
+  }
+
+  function toggleSound(){
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById("sgSoundBtn");
+    if(btn){
+      btn.textContent = soundEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
+      btn.style.color = soundEnabled ? "#00E5FF" : "#94A8C8";
+    }
+    if(soundEnabled) playSfx('interrogate');
+  }
+
+  function initOscilloscope(){
+    const canvas = document.getElementById("sgOscCanvas");
+    if(!canvas) return;
+    oscCtx = canvas.getContext("2d");
+    let phase = 0;
+
+    function renderOsc(){
+      if(!oscCtx) return;
+      const w = canvas.width;
+      const h = canvas.height;
+      oscCtx.clearRect(0, 0, w, h);
+
+      // Grid background lines
+      oscCtx.strokeStyle = "rgba(0, 229, 255, 0.12)";
+      oscCtx.lineWidth = 1;
+      oscCtx.beginPath();
+      for(let x=0; x<w; x+=24){
+        oscCtx.moveTo(x, 0); oscCtx.lineTo(x, h);
+      }
+      oscCtx.moveTo(0, h/2); oscCtx.lineTo(w, h/2);
+      oscCtx.stroke();
+
+      // Oscilloscope wave
+      const isScan = currentAction === 'scan';
+      const isDance = currentAction === 'dance';
+      const amp = isScan ? 14 : isDance ? 12 : 7;
+      const freq = isScan ? 0.065 : 0.04;
+      phase += isScan ? 0.22 : 0.08;
+
+      oscCtx.beginPath();
+      oscCtx.strokeStyle = isScan ? "#00E5FF" : isDance ? "#B388FF" : "#00E676";
+      oscCtx.lineWidth = 2.2;
+      oscCtx.shadowColor = oscCtx.strokeStyle;
+      oscCtx.shadowBlur = 8;
+
+      for(let x=0; x<w; x++){
+        const y = h/2 + Math.sin(x * freq + phase) * amp + Math.sin(x * 0.09 - phase * 1.5) * (amp * 0.4);
+        if(x === 0) oscCtx.moveTo(x, y);
+        else oscCtx.lineTo(x, y);
+      }
+      oscCtx.stroke();
+      oscCtx.shadowBlur = 0;
+
+      oscAnimFrame = requestAnimationFrame(renderOsc);
+    }
+    renderOsc();
+  }
 
   function init(){
     const wrap = document.getElementById("stickmanCanvasWrap");
@@ -2931,233 +3110,451 @@ window.VT_Stickman = (function(){
 
     // Scene
     scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x060913, 0.06);
 
-    // Camera
-    const width = wrap.clientWidth || 400;
-    const height = wrap.clientHeight || 280;
-    camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 1.2, 5.2);
-    camera.lookAt(0, 1.0, 0);
+    // Camera - High Angle / Cinematic Full-Body Framing
+    const width = wrap.clientWidth || 500;
+    const height = wrap.clientHeight || 460;
+    camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(0, 1.18, 6.4);
+    camera.lookAt(0, 1.08, 0);
 
     // Renderer
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
 
-    // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.85);
+    // Lighting
+    const ambient = new THREE.AmbientLight(0xd4e4ff, 0.95);
     scene.add(ambient);
 
-    const dirLight = new THREE.DirectionalLight(0x4285F4, 1.5);
-    dirLight.position.set(3, 5, 4);
-    scene.add(dirLight);
+    const keyLight = new THREE.DirectionalLight(0x00E5FF, 2.4);
+    keyLight.position.set(4, 7, 5);
+    scene.add(keyLight);
 
-    const backLight = new THREE.DirectionalLight(0x00E5FF, 1.1);
-    backLight.position.set(-3, 3, -2);
-    scene.add(backLight);
+    const rimLight = new THREE.DirectionalLight(0x7C4DFF, 1.8);
+    rimLight.position.set(-4, 5, -3);
+    scene.add(rimLight);
 
-    // Materials
-    const darkMat = new THREE.MeshStandardMaterial({
-      color: 0x1E232F,
-      roughness: 0.35,
-      metalness: 0.6
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.1);
+    fillLight.position.set(0, 2, 4);
+    scene.add(fillLight);
+
+    // Dynamic PointLights for Chest Core & Scanner
+    coreLight = new THREE.PointLight(0x00E5FF, 2.5, 4.5);
+    coreLight.position.set(0, 1.3, 0.35);
+    scene.add(coreLight);
+
+    scannerLight = new THREE.PointLight(0x00FFFF, 2.8, 4);
+    scannerLight.position.set(0.65, 1.1, 0.8);
+    scene.add(scannerLight);
+
+    // Advanced Cyber Materials
+    const darkArmorMat = new THREE.MeshStandardMaterial({
+      color: 0x0E1424,
+      roughness: 0.28,
+      metalness: 0.82
     });
 
-    const glowBlueMat = new THREE.MeshStandardMaterial({
-      color: 0x4285F4,
-      emissive: 0x1A73E8,
-      emissiveIntensity: 0.7,
-      roughness: 0.2,
-      metalness: 0.3
+    const gunmetalMat = new THREE.MeshStandardMaterial({
+      color: 0x1E293B,
+      roughness: 0.35,
+      metalness: 0.7
     });
 
     const glowCyanMat = new THREE.MeshStandardMaterial({
       color: 0x00E5FF,
-      emissive: 0x00B0FF,
-      emissiveIntensity: 0.9,
-      roughness: 0.1
+      emissive: 0x00E5FF,
+      emissiveIntensity: 0.95,
+      roughness: 0.15,
+      metalness: 0.2
     });
 
-    const greenMat = new THREE.MeshStandardMaterial({
-      color: 0x34A853,
-      emissive: 0x137333,
-      emissiveIntensity: 0.6
+    const glowBlueMat = new THREE.MeshStandardMaterial({
+      color: 0x1A73E8,
+      emissive: 0x1557B0,
+      emissiveIntensity: 0.8,
+      roughness: 0.2
     });
 
-    // Root stickman group
+    const glowAmberMat = new THREE.MeshStandardMaterial({
+      color: 0xFFB300,
+      emissive: 0xFF8F00,
+      emissiveIntensity: 0.85,
+      roughness: 0.2
+    });
+
+    const glowEmeraldMat = new THREE.MeshStandardMaterial({
+      color: 0x00E676,
+      emissive: 0x00C853,
+      emissiveIntensity: 0.8,
+      roughness: 0.2
+    });
+
+    const glassHoloMat = new THREE.MeshPhysicalMaterial({
+      color: 0x00E5FF,
+      transparent: true,
+      opacity: 0.38,
+      roughness: 0.1,
+      metalness: 0.1,
+      transmission: 0.7,
+      ior: 1.4
+    });
+
+    // Root Group
     stickmanGroup = new THREE.Group();
-    stickmanGroup.position.set(-0.15, -0.2, 0);
+    stickmanGroup.position.set(0, 0, 0);
     scene.add(stickmanGroup);
 
-    // 1. Holographic Floor Pedestal
-    const floorGeo = new THREE.CylinderGeometry(1.6, 1.7, 0.06, 32);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x242A38,
-      roughness: 0.4,
-      metalness: 0.7
+    // 1. Holographic Cyber Pedestal (Multi-Tiered)
+    const baseGeo = new THREE.CylinderGeometry(1.85, 1.95, 0.12, 36);
+    const baseMesh = new THREE.Mesh(baseGeo, darkArmorMat);
+    baseMesh.position.y = -0.06;
+    stickmanGroup.add(baseMesh);
+
+    // Top Platform Inner Ring
+    const innerPlatGeo = new THREE.CylinderGeometry(1.6, 1.6, 0.03, 36);
+    const innerPlat = new THREE.Mesh(innerPlatGeo, gunmetalMat);
+    innerPlat.position.y = 0.01;
+    stickmanGroup.add(innerPlat);
+
+    // Rotating Radar Sweep Ring
+    const radarRingGeo = new THREE.RingGeometry(1.4, 1.55, 36);
+    const radarRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00E5FF,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.75
     });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.position.y = -0.03;
-    stickmanGroup.add(floor);
+    const radarRing = new THREE.Mesh(radarRingGeo, radarRingMat);
+    radarRing.rotation.x = -Math.PI / 2;
+    radarRing.position.y = 0.03;
+    stickmanGroup.add(radarRing);
+    stickmanGroup.userData.radarRing = radarRing;
 
-    // Floor Glowing Ring
-    const floorRingGeo = new THREE.RingGeometry(1.3, 1.45, 32);
-    const floorRingMat = new THREE.MeshBasicMaterial({ color: 0x4285F4, side: THREE.DoubleSide });
-    const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
-    floorRing.rotation.x = -Math.PI / 2;
-    floorRing.position.y = 0.005;
-    stickmanGroup.add(floorRing);
-
-    // 2. Torso (Spine)
-    const torsoGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.95, 16);
-    const torso = new THREE.Mesh(torsoGeo, darkMat);
-    torso.position.y = 1.05;
-    stickmanGroup.add(torso);
-
-    // Chest Voice Core (Reactor badge)
-    const coreGeo = new THREE.SphereGeometry(0.11, 16, 16);
-    const core = new THREE.Mesh(coreGeo, glowCyanMat);
-    core.position.set(0, 1.25, 0.08);
-    stickmanGroup.add(core);
-
-    // 3. Head & Headphones Group
-    headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.72, 0);
-    stickmanGroup.add(headGroup);
-
-    // Head Sphere
-    const headGeo = new THREE.SphereGeometry(0.32, 24, 24);
-    const head = new THREE.Mesh(headGeo, darkMat);
-    headGroup.add(head);
-
-    // Cyber Visor / Eyes
-    const visorGeo = new THREE.BoxGeometry(0.38, 0.11, 0.22);
-    const visor = new THREE.Mesh(visorGeo, glowCyanMat);
-    visor.position.set(0, 0.04, 0.22);
-    headGroup.add(visor);
-
-    // Headphones Headband (Torus)
-    const bandGeo = new THREE.TorusGeometry(0.37, 0.045, 12, 24, Math.PI);
-    const bandMat = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.3 });
-    const band = new THREE.Mesh(bandGeo, bandMat);
-    band.position.y = 0.04;
-    headGroup.add(band);
-
-    // Earcups (Left & Right)
-    [-0.34, 0.34].forEach(x => {
-      const earcupGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.12, 16);
-      const earcup = new THREE.Mesh(earcupGeo, glowBlueMat);
-      earcup.rotation.z = Math.PI / 2;
-      earcup.position.set(x, 0.04, 0);
-      headGroup.add(earcup);
-
-      // Glowing LED Ring on earcup
-      const ringGeo = new THREE.TorusGeometry(0.12, 0.02, 8, 16);
-      const earcupRing = new THREE.Mesh(ringGeo, glowCyanMat);
-      earcupRing.rotation.y = Math.PI / 2;
-      earcupRing.position.set(x > 0 ? x + 0.06 : x - 0.06, 0.04, 0);
-      headGroup.add(earcupRing);
+    // Glowing Concentric Floor Beacons (4 corner nodes)
+    [ [1.2, 1.2], [-1.2, 1.2], [1.2, -1.2], [-1.2, -1.2] ].forEach(([x, z]) => {
+      const beaconGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.08, 16);
+      const beacon = new THREE.Mesh(beaconGeo, glowCyanMat);
+      beacon.position.set(x * 0.9, 0.04, z * 0.9);
+      stickmanGroup.add(beacon);
     });
 
-    // 4. Arms
-    // Left Arm (Relaxed / Grooving)
-    leftArmGroup = new THREE.Group();
-    leftArmGroup.position.set(-0.25, 1.45, 0);
-    stickmanGroup.add(leftArmGroup);
-
-    const lArmUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.45, 12), darkMat);
-    lArmUpper.position.y = -0.22;
-    leftArmGroup.add(lArmUpper);
-
-    const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), glowBlueMat);
-    lHand.position.y = -0.46;
-    leftArmGroup.add(lHand);
-
-    // Right Arm (Holding Scanner Wand)
-    rightArmGroup = new THREE.Group();
-    rightArmGroup.position.set(0.25, 1.45, 0);
-    stickmanGroup.add(rightArmGroup);
-
-    const rArmUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.45, 12), darkMat);
-    rArmUpper.position.y = -0.22;
-    rightArmGroup.add(rArmUpper);
-
-    const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), glowBlueMat);
-    rHand.position.y = -0.46;
-    rightArmGroup.add(rHand);
-
-    // Scanner Wand in Right Hand
-    const wandGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.55, 12);
-    wandMesh = new THREE.Mesh(wandGeo, darkMat);
-    wandMesh.rotation.x = Math.PI / 3;
-    wandMesh.position.set(0.06, -0.42, 0.22);
-    rightArmGroup.add(wandMesh);
-
-    // Scanner Tip Glowing Orb
-    const wandTipGeo = new THREE.SphereGeometry(0.09, 16, 16);
-    const wandTip = new THREE.Mesh(wandTipGeo, glowCyanMat);
-    wandTip.position.set(0.06, -0.25, 0.46);
-    rightArmGroup.add(wandTip);
-
-    // 5. Soundwave Rings (expanding from scanner wand)
-    for(let i=0; i<3; i++){
-      const waveGeo = new THREE.RingGeometry(0.12, 0.15, 24);
-      const waveMat = new THREE.MeshBasicMaterial({
-        color: 0x4285F4,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.7 - i*0.2
-      });
-      const wave = new THREE.Mesh(waveGeo, waveMat);
-      wave.position.set(0.06, -0.25, 0.5 + i*0.35);
-      wave.userData = { offset: i * 0.33, speed: 0.8 };
-      soundWaves.push(wave);
-      rightArmGroup.add(wave);
-    }
-
-    // 6. Legs
+    // 2. Legs & Armored Greaves
     // Left Leg
-    const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.65, 12), darkMat);
-    lLeg.position.set(-0.16, 0.45, 0);
-    lLeg.rotation.z = 0.08;
-    stickmanGroup.add(lLeg);
+    const lLegGroup = new THREE.Group();
+    lLegGroup.position.set(-0.24, 0.85, 0);
+    stickmanGroup.add(lLegGroup);
 
-    const lFoot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.22), glowBlueMat);
-    lFoot.position.set(-0.19, 0.07, 0.04);
-    stickmanGroup.add(lFoot);
+    const lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.55, 16), darkArmorMat);
+    lThigh.position.y = -0.27;
+    lLegGroup.add(lThigh);
+
+    const lKnee = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), glowCyanMat);
+    lKnee.position.y = -0.56;
+    lLegGroup.add(lKnee);
+
+    const lShin = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.07, 0.52, 16), darkArmorMat);
+    lShin.position.y = -0.84;
+    lLegGroup.add(lShin);
+
+    const lBoot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.32), gunmetalMat);
+    lBoot.position.set(0, -1.14, 0.06);
+    lLegGroup.add(lBoot);
+
+    const lSole = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.03, 0.33), glowCyanMat);
+    lSole.position.set(0, -1.21, 0.06);
+    lLegGroup.add(lSole);
 
     // Right Leg
-    const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.65, 12), darkMat);
-    rLeg.position.set(0.16, 0.45, 0);
-    rLeg.rotation.z = -0.08;
-    stickmanGroup.add(rLeg);
+    const rLegGroup = new THREE.Group();
+    rLegGroup.position.set(0.24, 0.85, 0);
+    stickmanGroup.add(rLegGroup);
 
-    const rFoot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.22), glowBlueMat);
-    rFoot.position.set(0.19, 0.07, 0.04);
-    stickmanGroup.add(rFoot);
+    const rThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.55, 16), darkArmorMat);
+    rThigh.position.y = -0.27;
+    rLegGroup.add(rThigh);
 
-    // 7. Floating Holographic Shield Badge Orbiting
-    const badgeGeo = new THREE.BoxGeometry(0.38, 0.18, 0.02);
-    const badgeMesh = new THREE.Mesh(badgeGeo, greenMat);
-    badgeMesh.position.set(0.85, 1.45, 0.2);
-    stickmanGroup.add(badgeMesh);
-    stickmanGroup.userData.badge = badgeMesh;
+    const rKnee = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), glowCyanMat);
+    rKnee.position.y = -0.56;
+    rLegGroup.add(rKnee);
 
-    // Events: Mouse Move & Click
+    const rShin = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.07, 0.52, 16), darkArmorMat);
+    rShin.position.y = -0.84;
+    rLegGroup.add(rShin);
+
+    const rBoot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.32), gunmetalMat);
+    rBoot.position.set(0, -1.14, 0.06);
+    rLegGroup.add(rBoot);
+
+    const rSole = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.03, 0.33), glowCyanMat);
+    rSole.position.set(0, -1.21, 0.06);
+    rLegGroup.add(rSole);
+
+    // 3. Torso, Detective Trenchcoat & Arc Core
+    const torsoGroup = new THREE.Group();
+    torsoGroup.position.y = 1.0;
+    stickmanGroup.add(torsoGroup);
+
+    // Cyber Pectoral Armor Plate
+    const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.58, 0.34), darkArmorMat);
+    chestPlate.position.set(0, 0.32, 0);
+    torsoGroup.add(chestPlate);
+
+    // Detective Coat Lower Skirts / Waist Armor
+    [-0.22, 0.22].forEach(x => {
+      const coatSk = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.48, 0.28), gunmetalMat);
+      coatSk.position.set(x, -0.16, 0);
+      coatSk.rotation.z = x > 0 ? -0.12 : 0.12;
+      torsoGroup.add(coatSk);
+
+      // Cyan piping on coat edge
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.49, 0.29), glowCyanMat);
+      trim.position.set(x > 0 ? x + 0.11 : x - 0.11, -0.16, 0);
+      torsoGroup.add(trim);
+    });
+
+    // Chest Arc Voice Core (Multi-ring Glowing Reactor)
+    const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.025, 16, 32), glowBlueMat);
+    coreRing.position.set(0, 0.35, 0.18);
+    torsoGroup.add(coreRing);
+
+    const coreCenter = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 20), glowCyanMat);
+    coreCenter.position.set(0, 0.35, 0.18);
+    torsoGroup.add(coreCenter);
+
+    // Shoulder Pauldrons (Left & Right)
+    [-0.38, 0.38].forEach(x => {
+      const pld = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.26), darkArmorMat);
+      pld.position.set(x, 0.58, 0);
+      pld.rotation.z = x > 0 ? -0.2 : 0.2;
+      torsoGroup.add(pld);
+
+      const pldLed = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.025, 0.04), glowEmeraldMat);
+      pldLed.position.set(x, 0.64, 0.11);
+      torsoGroup.add(pldLed);
+    });
+
+    // 4. Head Group (Detective Fedora + Ocular Visor + Studio Headphones)
+    headGroup = new THREE.Group();
+    headGroup.position.set(0, 1.84, 0);
+    stickmanGroup.add(headGroup);
+
+    // Head Base Sphere
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.32, 24, 24), darkArmorMat);
+    headGroup.add(headMesh);
+
+    // High-Tech Cyber Visor / Ocular Scanner
+    const visorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.11, 0.24), glowCyanMat);
+    visorMesh.position.set(0, 0.05, 0.22);
+    headGroup.add(visorMesh);
+
+    // Cyber Detective Fedora Hat
+    const hatGroup = new THREE.Group();
+    hatGroup.position.set(0, 0.24, 0);
+    headGroup.add(hatGroup);
+
+    // Fedora Brim (Stylish wide beveled brim)
+    const brimGeo = new THREE.CylinderGeometry(0.62, 0.62, 0.04, 32);
+    const brimMesh = new THREE.Mesh(brimGeo, gunmetalMat);
+    brimMesh.rotation.x = 0.06; // slight forward tilt
+    hatGroup.add(brimMesh);
+
+    // Fedora Crown
+    const crownGeo = new THREE.CylinderGeometry(0.33, 0.37, 0.34, 32);
+    const crownMesh = new THREE.Mesh(crownGeo, darkArmorMat);
+    crownMesh.position.set(0, 0.18, 0);
+    hatGroup.add(crownMesh);
+
+    // Glowing Neon Hat Band
+    const hatBandGeo = new THREE.CylinderGeometry(0.375, 0.375, 0.06, 32);
+    const hatBandMesh = new THREE.Mesh(hatBandGeo, glowCyanMat);
+    hatBandMesh.position.set(0, 0.06, 0);
+    hatGroup.add(hatBandMesh);
+
+    // Studio Forensic Headphones
+    const phoneBandGeo = new THREE.TorusGeometry(0.40, 0.04, 12, 32, Math.PI);
+    const phoneBand = new THREE.Mesh(phoneBandGeo, gunmetalMat);
+    phoneBand.position.set(0, 0.06, 0);
+    headGroup.add(phoneBand);
+
+    [-0.37, 0.37].forEach(x => {
+      const earcup = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.13, 20), glowBlueMat);
+      earcup.rotation.z = Math.PI / 2;
+      earcup.position.set(x, 0.05, 0);
+      headGroup.add(earcup);
+
+      const cupRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 12, 20), glowCyanMat);
+      cupRing.rotation.y = Math.PI / 2;
+      cupRing.position.set(x > 0 ? x + 0.07 : x - 0.07, 0.05, 0);
+      headGroup.add(cupRing);
+    });
+
+    // 5. Left Arm - Holding Holographic Data Slate
+    leftArmGroup = new THREE.Group();
+    leftArmGroup.position.set(-0.38, 1.58, 0);
+    stickmanGroup.add(leftArmGroup);
+
+    const lUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.44, 16), darkArmorMat);
+    lUpperArm.position.y = -0.22;
+    leftArmGroup.add(lUpperArm);
+
+    const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), glowBlueMat);
+    lHand.position.set(0, -0.46, 0.16);
+    leftArmGroup.add(lHand);
+
+    // Holographic Data Slate Tablet
+    const slateGroup = new THREE.Group();
+    slateGroup.position.set(-0.06, -0.46, 0.32);
+    slateGroup.rotation.x = -Math.PI / 4;
+    leftArmGroup.add(slateGroup);
+
+    const slatePlate = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.30, 0.02), glassHoloMat);
+    slateGroup.add(slatePlate);
+
+    const slateBorder = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.32, 0.015), glowCyanMat);
+    slateBorder.position.z = -0.005;
+    slateGroup.add(slateBorder);
+
+    // Floating 3D Equalizer Bars on Slate
+    dataBars = [];
+    for(let b=0; b<7; b++){
+      const barMesh = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.12, 0.03), b % 2 === 0 ? glowCyanMat : glowEmeraldMat);
+      barMesh.position.set(-0.15 + b * 0.05, 0, 0.03);
+      slateGroup.add(barMesh);
+      dataBars.push(barMesh);
+    }
+
+    // 6. Right Arm - Holding Sonic Radar Wand & Volumetric Laser Beam
+    rightArmGroup = new THREE.Group();
+    rightArmGroup.position.set(0.38, 1.58, 0);
+    stickmanGroup.add(rightArmGroup);
+
+    const rUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.44, 16), darkArmorMat);
+    rUpperArm.position.y = -0.22;
+    rightArmGroup.add(rUpperArm);
+
+    const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), glowBlueMat);
+    rHand.position.set(0, -0.46, 0.16);
+    rightArmGroup.add(rHand);
+
+    // Directional Sonic Radar Wand
+    wandMesh = new THREE.Group();
+    wandMesh.position.set(0.05, -0.46, 0.24);
+    wandMesh.rotation.x = Math.PI / 3;
+    rightArmGroup.add(wandMesh);
+
+    const wandBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.65, 16), darkArmorMat);
+    wandMesh.add(wandBarrel);
+
+    const wandCoil = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.22, 16), glowCyanMat);
+    wandCoil.position.y = 0.12;
+    wandMesh.add(wandCoil);
+
+    const wandTip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), glowCyanMat);
+    wandTip.position.y = 0.36;
+    wandMesh.add(wandTip);
+
+    // Volumetric Laser Scan Cone (Fires during "scan")
+    const laserGeo = new THREE.ConeGeometry(0.42, 2.8, 20, 1, true);
+    const laserMat = new THREE.MeshBasicMaterial({
+      color: 0x00E5FF,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide
+    });
+    laserBeamMesh = new THREE.Mesh(laserGeo, laserMat);
+    laserBeamMesh.position.set(0, 1.76, 0);
+    laserBeamMesh.rotation.x = -Math.PI / 2;
+    wandMesh.add(laserBeamMesh);
+
+    // Expanding Sound Wave Rings
+    for(let i=0; i<4; i++){
+      const waveGeo = new THREE.RingGeometry(0.12, 0.16, 24);
+      const waveMat = new THREE.MeshBasicMaterial({
+        color: 0x00E5FF,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.8 - i * 0.18
+      });
+      const wave = new THREE.Mesh(waveGeo, waveMat);
+      wave.position.set(0, 0.42 + i * 0.35, 0);
+      wave.rotation.x = Math.PI / 2;
+      wave.userData = { offset: i * 0.25, speed: 0.9 };
+      soundWaves.push(wave);
+      wandMesh.add(wave);
+    }
+
+    // 7. Deployable 3D Force Shield (Hexagonal Sphere)
+    const shieldGeo = new THREE.IcosahedronGeometry(2.35, 2);
+    const shieldMat = new THREE.MeshStandardMaterial({
+      color: 0x00E676,
+      emissive: 0x00C853,
+      emissiveIntensity: 0.6,
+      wireframe: true,
+      transparent: true,
+      opacity: 0
+    });
+    forceShieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+    forceShieldMesh.position.set(0, 1.25, 0);
+    stickmanGroup.add(forceShieldMesh);
+
+    // 8. Tilted Orbiting Frequency Rings
+    [0.45, -0.35].forEach((rotX, idx) => {
+      const orbRingGeo = new THREE.RingGeometry(1.9 + idx * 0.25, 1.95 + idx * 0.25, 48);
+      const orbRingMat = new THREE.MeshBasicMaterial({
+        color: idx === 0 ? 0x00E5FF : 0x7C4DFF,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.45
+      });
+      const orbRing = new THREE.Mesh(orbRingGeo, orbRingMat);
+      orbRing.position.set(0, 1.25, 0);
+      orbRing.rotation.x = rotX;
+      stickmanGroup.add(orbRing);
+      orbitRings.push(orbRing);
+    });
+
+    // 9. Floating Cyber Biometric Particles
+    const particleCount = 28;
+    const pGeo = new THREE.SphereGeometry(0.028, 8, 8);
+    for(let p=0; p<particleCount; p++){
+      const pMesh = new THREE.Mesh(pGeo, p % 3 === 0 ? glowCyanMat : p % 3 === 1 ? glowEmeraldMat : glowAmberMat);
+      pMesh.position.set(
+        (Math.random() - 0.5) * 3.2,
+        Math.random() * 2.8,
+        (Math.random() - 0.5) * 3.2
+      );
+      pMesh.userData = {
+        speedY: 0.004 + Math.random() * 0.008,
+        baseX: pMesh.position.x,
+        baseZ: pMesh.position.z,
+        freq: 1 + Math.random() * 2
+      };
+      stickmanGroup.add(pMesh);
+      particles.push(pMesh);
+    }
+
+    // Events: Mouse Tracking & Click Interactivity
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     canvas.addEventListener("click", onClickStickman);
 
-    // Resize Handler
+    // Resize Observer
     const ro = new ResizeObserver(() => {
-      const w = wrap.clientWidth || 400;
-      const h = wrap.clientHeight || 280;
+      const w = wrap.clientWidth || 500;
+      const h = wrap.clientHeight || 460;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     });
     ro.observe(wrap);
 
-    // Start loop
+    // Start Oscilloscope
+    initOscilloscope();
+
+    // Start Main Render Loop
     animate(0);
   }
 
@@ -3172,13 +3569,9 @@ window.VT_Stickman = (function(){
   }
 
   function onClickStickman(){
-    triggerRandomAction();
-  }
-
-  function triggerRandomAction(){
-    const actions = ['wave', 'dance', 'scan'];
-    const pick = actions[Math.floor(Math.random() * actions.length)];
-    doAction(pick);
+    const actions = ['scan', 'shield', 'interrogate', 'dance'];
+    const next = actions[Math.floor(Math.random() * actions.length)];
+    doAction(next);
   }
 
   function doAction(action){
@@ -3186,31 +3579,56 @@ window.VT_Stickman = (function(){
     actionStartTime = performance.now();
 
     const quoteEl = document.getElementById("stickmanQuote");
+    const badgeEl = document.getElementById("sgActionBadge");
     const jitFill = document.getElementById("sgJitterFill");
     const jitVal = document.getElementById("sgJitterVal");
     const vocFill = document.getElementById("sgVocoderFill");
     const vocVal = document.getElementById("sgVocoderVal");
+    const formFill = document.getElementById("sgFormantFill");
+    const formVal = document.getElementById("sgFormantVal");
+    const oscFreq = document.getElementById("sgOscFreq");
+
+    playSfx(action);
 
     if(action === 'scan'){
-      if(quoteEl) quoteEl.textContent = "\"Scanning acoustic frequencies in real-time... No AI voice clone can hide! 🎧\"";
-      if(jitFill) jitFill.style.width = "94%";
-      if(jitVal) jitVal.textContent = "0.94% Jitter ✓";
+      if(badgeEl) badgeEl.textContent = "🔍 360° LASER DEEP-SCAN";
+      if(quoteEl) quoteEl.textContent = "\"Deploying high-frequency directional acoustic radar! Deconvolving synthetic neural vocoder layers in real-time... ⚡\"";
+      if(jitFill) jitFill.style.width = "95%";
+      if(jitVal) jitVal.textContent = "0.95% Human ✓";
       if(vocFill) vocFill.style.width = "99%";
-      if(vocVal) vocVal.textContent = "99% Human ✓";
-    } else if(action === 'dance'){
-      if(quoteEl) quoteEl.textContent = "\"Grooving to genuine human acoustics! Rhythm is 100% natural. 🕺✨\"";
+      if(vocVal) vocVal.textContent = "99% Clean ✓";
+      if(formFill) formFill.style.width = "94%";
+      if(formVal) formVal.textContent = "72ms Organic";
+      if(oscFreq) oscFreq.textContent = "284.2 Hz · ULTRA-HIGH SCAN";
+    } else if(action === 'shield'){
+      if(badgeEl) badgeEl.textContent = "🛡️ CRYPTOGRAPHIC FORCE SHIELD";
+      if(quoteEl) quoteEl.textContent = "\"Force Shield deployed! Anchoring SHA-256 tamper-proof ledger blocks across banking nodes. Zero fraud permitted! 🛡️\"";
       if(jitFill) jitFill.style.width = "88%";
-      if(vocFill) vocFill.style.width = "92%";
-    } else if(action === 'wave'){
-      if(quoteEl) quoteEl.textContent = "\"Hello! I'm VOX-BOT 3D. Ready to verify calls & detect clones 24/7! 👋\"";
+      if(vocFill) vocFill.style.width = "97%";
+      if(oscFreq) oscFreq.textContent = "160.0 Hz · SHIELD HARMONIC";
+    } else if(action === 'interrogate'){
+      if(badgeEl) badgeEl.textContent = "🎧 FORENSIC INTERROGATION";
+      if(quoteEl) quoteEl.textContent = "\"Analyzing glottal cycle periodicity... Biological laryngeal flutter detected. Vocal tract impedance confirms genuine human speaker! 🔎\"";
+      if(jitFill) jitFill.style.width = "91%";
+      if(jitVal) jitVal.textContent = "0.91% Human ✓";
+      if(vocFill) vocFill.style.width = "98%";
+      if(oscFreq) oscFreq.textContent = "196.4 Hz · SPECTRAL AUDIT";
+    } else if(action === 'dance'){
+      if(badgeEl) badgeEl.textContent = "🕺 ACOUSTIC BEAT GROOVE";
+      if(quoteEl) quoteEl.textContent = "\"Grooving to genuine human acoustics! Dynamic pitch variance is 100% organic and rich in natural harmonics. 🕺✨\"";
+      if(jitFill) jitFill.style.width = "89%";
+      if(vocFill) vocFill.style.width = "93%";
+      if(oscFreq) oscFreq.textContent = "128.0 Hz · RHYTHM LOCK";
     }
 
     if(quoteTimer) clearTimeout(quoteTimer);
     quoteTimer = setTimeout(() => {
       currentAction = 'idle';
+      if(badgeEl) badgeEl.textContent = "RADAR ACTIVE";
       const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
       if(quoteEl) quoteEl.textContent = randomQuote;
-    }, 4500);
+      if(oscFreq) oscFreq.textContent = "142.8 Hz · STABLE";
+    }, 5500);
   }
 
   function animate(t){
@@ -3218,68 +3636,119 @@ window.VT_Stickman = (function(){
     const time = t * 0.001;
 
     // Smooth mouse damping
-    mouse.x += (mouse.targetX - mouse.x) * 0.08;
-    mouse.y += (mouse.targetY - mouse.y) * 0.08;
+    mouse.x += (mouse.targetX - mouse.x) * 0.06;
+    mouse.y += (mouse.targetY - mouse.y) * 0.06;
 
+    // Camera subtle cinematic parallax
+    if(camera){
+      camera.position.x = mouse.x * 0.4;
+      camera.position.y = 1.18 + mouse.y * 0.2;
+      camera.lookAt(0, 1.08, 0);
+    }
+
+    // Head tracks mouse gaze
     if(headGroup){
-      // Mouse gaze tracking (head follows cursor)
-      headGroup.rotation.y = mouse.x * 0.65;
-      headGroup.rotation.x = -mouse.y * 0.45;
-
-      // Subtle idle breathing nod
-      headGroup.position.y = 1.72 + Math.sin(time * 2.8) * 0.025;
+      headGroup.rotation.y = mouse.x * 0.72;
+      headGroup.rotation.x = -mouse.y * 0.42;
+      headGroup.position.y = 1.84 + Math.sin(time * 2.5) * 0.02;
     }
 
-    if(stickmanGroup){
-      // Floating badge orbit
-      const badge = stickmanGroup.userData.badge;
-      if(badge){
-        badge.position.x = Math.cos(time * 1.5) * 0.85;
-        badge.position.z = Math.sin(time * 1.5) * 0.45;
-        badge.position.y = 1.35 + Math.sin(time * 3) * 0.08;
-        badge.rotation.y = time * 1.2;
-      }
-
-      // Torso breathing
-      stickmanGroup.position.y = -0.2 + Math.sin(time * 2.8) * 0.015;
+    // Pedestal radar ring spins continuously
+    if(stickmanGroup && stickmanGroup.userData.radarRing){
+      stickmanGroup.userData.radarRing.rotation.z = time * 0.5;
     }
 
-    // Soundwave rings animation
+    // Tilted orbit rings rotate
+    orbitRings.forEach((r, idx) => {
+      r.rotation.z = (idx === 0 ? time : -time) * 0.35;
+    });
+
+    // Floating particles drift upward
+    particles.forEach(p => {
+      p.position.y += p.userData.speedY;
+      p.position.x = p.userData.baseX + Math.sin(time * p.userData.freq) * 0.08;
+      p.position.z = p.userData.baseZ + Math.cos(time * p.userData.freq) * 0.08;
+      if(p.position.y > 2.8) p.position.y = 0.1;
+    });
+
+    // Data slate equalizer bars bounce in real-time
+    dataBars.forEach((b, idx) => {
+      const h = 0.04 + Math.abs(Math.sin(time * 6 + idx * 0.8)) * 0.18;
+      b.scale.y = h / 0.12;
+      b.position.y = h * 0.5;
+    });
+
+    // Soundwave rings from scanner wand
     soundWaves.forEach(w => {
       let progress = ((time * w.userData.speed + w.userData.offset) % 1);
       w.scale.set(1 + progress * 2.8, 1 + progress * 2.8, 1);
       w.material.opacity = Math.max(0, 0.85 * (1 - progress));
     });
 
-    // Action-specific animations
+    // Chest Core & Scanner dynamic lighting pulse
+    if(coreLight){
+      coreLight.intensity = 2.4 + Math.sin(time * 3.5) * 0.8;
+    }
+
+    // Action animations
     const elapsed = (performance.now() - actionStartTime) * 0.001;
-    if(currentAction === 'dance'){
+
+    if(currentAction === 'scan'){
+      // Laser scan forward beam
+      if(rightArmGroup){
+        rightArmGroup.rotation.x = -1.25 + Math.sin(elapsed * 5) * 0.12;
+        rightArmGroup.rotation.y = mouse.x * 0.4;
+      }
+      if(laserBeamMesh){
+        laserBeamMesh.material.opacity = 0.55 + Math.sin(elapsed * 12) * 0.25;
+        laserBeamMesh.rotation.y = time * 2;
+      }
+      if(scannerLight){
+        scannerLight.intensity = 4.5 + Math.sin(elapsed * 15) * 2;
+        scannerLight.color.setHex(0x00FFFF);
+      }
+      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
+    } else if(currentAction === 'shield'){
+      // Deploy Force Shield
+      if(forceShieldMesh){
+        forceShieldMesh.material.opacity = Math.min(0.68, forceShieldMesh.material.opacity + 0.05);
+        forceShieldMesh.rotation.y = time * 0.8;
+        forceShieldMesh.rotation.x = time * 0.4;
+        const scale = 1 + Math.sin(time * 4) * 0.04;
+        forceShieldMesh.scale.set(scale, scale, scale);
+      }
+      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
+    } else if(currentAction === 'interrogate'){
+      // Interrogation pose: Right hand taps earphone / listens intently
+      if(rightArmGroup){
+        rightArmGroup.rotation.x = -1.5;
+        rightArmGroup.rotation.z = 0.75;
+      }
+      if(leftArmGroup){
+        leftArmGroup.rotation.x = -0.5;
+        leftArmGroup.rotation.z = -0.3;
+      }
+      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
+      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
+    } else if(currentAction === 'dance'){
+      // Energetic groove bop
       const beat = Math.sin(elapsed * 9);
-      if(headGroup) headGroup.rotation.z = beat * 0.22;
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.3 + beat * 0.45;
-      if(rightArmGroup) rightArmGroup.rotation.z = 0.3 - beat * 0.45;
-      if(stickmanGroup) stickmanGroup.position.y = -0.2 + Math.abs(Math.sin(elapsed * 9)) * 0.12;
-    } else if(currentAction === 'wave'){
-      if(rightArmGroup){
-        rightArmGroup.rotation.z = 1.8 + Math.sin(elapsed * 12) * 0.35;
-        rightArmGroup.rotation.x = -0.3;
-      }
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.15;
-    } else if(currentAction === 'scan'){
-      if(rightArmGroup){
-        rightArmGroup.rotation.x = -1.2 + Math.sin(elapsed * 4) * 0.15;
-        rightArmGroup.rotation.z = 0.2 + Math.cos(elapsed * 4) * 0.15;
-      }
-      soundWaves.forEach(w => {
-        w.material.color.setHex(0x00E5FF);
-      });
+      if(headGroup) headGroup.rotation.z = beat * 0.25;
+      if(leftArmGroup) leftArmGroup.rotation.z = -0.35 + beat * 0.5;
+      if(rightArmGroup) rightArmGroup.rotation.z = 0.35 - beat * 0.5;
+      if(stickmanGroup) stickmanGroup.position.y = 0.05 + Math.abs(Math.sin(elapsed * 9)) * 0.14;
+      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
+      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
     } else {
-      // Idle pose
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.18 + Math.sin(time * 2) * 0.06;
+      // Natural Idle Breathing
+      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
+      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
+      if(leftArmGroup) leftArmGroup.rotation.z = -0.15 + Math.sin(time * 2) * 0.05;
       if(rightArmGroup){
-        rightArmGroup.rotation.z = 0.18 - Math.sin(time * 2) * 0.06;
-        rightArmGroup.rotation.x = -0.15 + Math.sin(time * 1.5) * 0.08;
+        rightArmGroup.rotation.z = 0.18 - Math.sin(time * 2) * 0.05;
+        rightArmGroup.rotation.x = -0.12 + Math.sin(time * 1.6) * 0.07;
       }
+      if(stickmanGroup) stickmanGroup.position.y = 0.05 + Math.sin(time * 2.5) * 0.015;
     }
 
     if(renderer && scene && camera){
@@ -3287,7 +3756,6 @@ window.VT_Stickman = (function(){
     }
   }
 
-  // Auto initialize when DOM is ready
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", init);
   } else {
@@ -3296,7 +3764,8 @@ window.VT_Stickman = (function(){
 
   return {
     doAction: doAction,
-    triggerRandom: triggerRandomAction
+    triggerRandom: onClickStickman,
+    toggleSound: toggleSound
   };
 })();
 </script>
