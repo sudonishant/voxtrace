@@ -16,6 +16,10 @@
       "destination": "/api/payment/verify.js"
     },
     {
+      "source": "/api/ai/deep-scan",
+      "destination": "/api/ai/deep-scan.js"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
