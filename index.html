@@ -157,6 +157,15 @@ button{font-family:inherit}
 .sg-btn-purple{border-color:rgba(179,136,255,0.4);color:#d1c4e9}
 .sg-btn-purple:hover{border-color:#B388FF;color:#B388FF;box-shadow:0 0 14px rgba(179,136,255,0.35)}
 .sg-btn-mute{margin-left:auto;padding:8px 10px;font-size:11px;border-color:rgba(255,255,255,0.15);color:#94A8C8}
+.sg-btn.active{box-shadow:0 0 16px rgba(0,229,255,0.55);border-color:#00E5FF;color:#00E5FF}
+
+/* Mode Selector Strip at bottom of Guardian Card */
+.sg-mode-strip{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.sg-mode-chip{background:rgba(13,21,40,0.85);border:1.5px solid rgba(0,229,255,0.22);border-radius:999px;padding:9px 18px;font-weight:700;font-size:12.5px;color:#cfdcf5;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:all .22s ease;backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,0.35)}
+.sg-mode-chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.sg-mode-chip:hover{border-color:#00E5FF;color:#00E5FF;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,229,255,0.35)}
+.sg-mode-chip.active{background:linear-gradient(135deg,rgba(0,229,255,0.2) 0%,rgba(26,115,232,0.35) 100%);border-color:#00E5FF;color:#00E5FF;box-shadow:0 0 18px rgba(0,229,255,0.45)}
+.sg-mode-chip.active i{box-shadow:0 0 10px currentColor;animation:sgPulse 1.2s infinite}
 @keyframes floatSubtle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
 /* ============ ABOUT ============ */
@@ -655,8 +664,8 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
           <div class="sg-header">
             <div class="sg-badge"><span class="sg-pulse"></span> 3D AI VOICE GUARDIAN &amp; FORENSIC DETECTIVE</div>
             <div class="sg-tagline">
-              <span class="sg-status-chip">⚡ CYBER-FORENSICS ACTIVE</span>
-              <span>Interactive 3D WebGL Avatar · Real-Time Acoustic Radar · Move Mouse To Track</span>
+              <span class="sg-status-chip" id="sgHeaderModeChip">⚡ MODE: LIVE CALL INTERCEPT</span>
+              <a href="#/verify" style="color:#00E5FF;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px">Launch Voice Check →</a>
             </div>
           </div>
 
@@ -664,7 +673,7 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
             <!-- 3D Canvas Box -->
             <div id="stickmanCanvasWrap" class="sg-canvas-wrap">
               <canvas id="stickmanCanvas"></canvas>
-              <div id="stickmanHint" class="sg-canvas-hint">🎧 Move mouse to guide gaze · Click avatar or buttons to scan!</div>
+              <div id="stickmanHint" class="sg-canvas-hint">🎧 Move mouse to guide gaze · Click avatar or modes to inspect!</div>
             </div>
 
             <!-- Cyber Detective HUD -->
@@ -688,32 +697,32 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
 
               <div class="sg-live-meters">
                 <div class="sg-meter">
-                  <span class="sg-m-label">Vocal Jitter Radar</span>
+                  <span class="sg-m-label" id="sgMeter1Lbl">Vocal Jitter Radar</span>
                   <div class="sg-m-bar"><div class="sg-m-fill" id="sgJitterFill" style="width: 86%;"></div></div>
                   <span class="sg-m-val" id="sgJitterVal">0.86% Human</span>
                 </div>
                 <div class="sg-meter">
-                  <span class="sg-m-label">Vocoder Phase Artifacts</span>
+                  <span class="sg-m-label" id="sgMeter2Lbl">Vocoder Phase Artifacts</span>
                   <div class="sg-m-bar"><div class="sg-m-fill sg-m-blue" id="sgVocoderFill" style="width: 98%;"></div></div>
                   <span class="sg-m-val" id="sgVocoderVal">98% Clean</span>
                 </div>
                 <div class="sg-meter">
-                  <span class="sg-m-label">Formant Inertia Tracking</span>
+                  <span class="sg-m-label" id="sgMeter3Lbl">Formant Inertia Tracking</span>
                   <div class="sg-m-bar"><div class="sg-m-fill sg-m-amber" id="sgFormantFill" style="width: 92%;"></div></div>
                   <span class="sg-m-val" id="sgFormantVal">68ms Organic</span>
                 </div>
                 <div class="sg-meter">
-                  <span class="sg-m-label">SHA-256 Hash Evidence</span>
-                  <div class="sg-m-bar"><div class="sg-m-fill sg-m-fill" style="width: 100%;"></div></div>
-                  <span class="sg-m-val" style="color:#00E676">Secured ✓</span>
+                  <span class="sg-m-label" id="sgMeter4Lbl">SHA-256 Hash Evidence</span>
+                  <div class="sg-m-bar"><div class="sg-m-fill" id="sgEvidenceFill" style="width: 100%;"></div></div>
+                  <span class="sg-m-val" id="sgEvidenceVal" style="color:#00E676">Secured ✓</span>
                 </div>
               </div>
 
               <div class="sg-controls">
-                <button type="button" class="sg-btn sg-btn-cyan" onclick="VT_Stickman.doAction('scan')">🔍 Laser Deep-Scan</button>
-                <button type="button" class="sg-btn sg-btn-emerald" onclick="VT_Stickman.doAction('shield')">🛡️ Force Shield</button>
-                <button type="button" class="sg-btn sg-btn-amber" onclick="VT_Stickman.doAction('interrogate')">🎧 Interrogate</button>
-                <button type="button" class="sg-btn sg-btn-purple" onclick="VT_Stickman.doAction('dance')">🕺 Beat Groove</button>
+                <button type="button" class="sg-btn sg-btn-cyan active" id="btn-mode-live" onclick="VT_Stickman.setMode('live')">📡 Live Intercept</button>
+                <button type="button" class="sg-btn sg-btn-amber" id="btn-mode-recorded" onclick="VT_Stickman.setMode('recorded')">🔍 Recorded Scan</button>
+                <button type="button" class="sg-btn sg-btn-emerald" id="btn-mode-evidence" onclick="VT_Stickman.setMode('evidence')">🛡️ Evidence Vault</button>
+                <button type="button" class="sg-btn sg-btn-purple" id="btn-mode-genai" onclick="VT_Stickman.setMode('genai')">🧠 Gen AI Core</button>
                 <button type="button" class="sg-btn sg-btn-mute" id="sgSoundBtn" onclick="VT_Stickman.toggleSound()" title="Toggle High-Tech Sci-Fi Sound FX">🔊 SFX: ON</button>
               </div>
             </div>
@@ -721,15 +730,15 @@ label.fl{display:block;font-size:13px;font-weight:700;color:var(--body);margin:0
 
           <div class="wave-strip" style="margin:0;border-radius:0;border:none;border-top:1px solid rgba(0,229,255,.18);background:#070B16;box-shadow:none;padding:16px 24px 14px;">
             <svg viewBox="0 0 1200 90" preserveAspectRatio="none" aria-hidden="true" style="height:75px;">
-              <polyline id="heroWave" fill="none" stroke="#4285F4" stroke-width="2.4" opacity="0.9"/>
-              <polyline id="heroWave2" fill="none" stroke="#D2E3FC" stroke-width="2" opacity="1"/>
-              <polyline id="heroWave3" fill="none" stroke="#34A853" stroke-width="1.6" opacity="0.65"/>
+              <polyline id="heroWave" fill="none" stroke="#00E5FF" stroke-width="2.4" opacity="0.9"/>
+              <polyline id="heroWave2" fill="none" stroke="#4285F4" stroke-width="2" opacity="0.8"/>
+              <polyline id="heroWave3" fill="none" stroke="#00E676" stroke-width="1.6" opacity="0.7"/>
             </svg>
-            <div class="hero-chips" style="margin-top:10px;">
-              <span class="hchip"><i style="background:var(--blue)"></i> Live call mode</span>
-              <span class="hchip"><i style="background:var(--red)"></i> Recorded call mode</span>
-              <span class="hchip"><i style="background:var(--green)"></i> SHA-256 evidence chain</span>
-              <span class="hchip"><i style="background:var(--yellow)"></i> Explainable indicators</span>
+            <div class="sg-mode-strip">
+              <button type="button" class="sg-mode-chip active" id="chip-live" onclick="VT_Stickman.setMode('live')"><i style="background:#00E5FF"></i> 📡 Live Call Mode</button>
+              <button type="button" class="sg-mode-chip" id="chip-recorded" onclick="VT_Stickman.setMode('recorded')"><i style="background:#FFB300"></i> 🔍 Recorded Call Mode</button>
+              <button type="button" class="sg-mode-chip" id="chip-evidence" onclick="VT_Stickman.setMode('evidence')"><i style="background:#00E676"></i> 🛡️ SHA-256 Evidence Chain</button>
+              <button type="button" class="sg-mode-chip" id="chip-genai" onclick="VT_Stickman.setMode('genai')"><i style="background:#B388FF"></i> 🧠 Gen AI Llama 3.3 Core</button>
             </div>
           </div>
         </div>
@@ -1373,13 +1382,13 @@ $("menuBtn").addEventListener("click", ()=>$("navLinks").classList.toggle("open"
 
 /* decorative hero waveform */
 function drawHeroWave(){
-  const mk = (fn)=>{ let p=""; for(let x=0;x<=1200;x+=4){ const y=fn(x); p += (x?(p?" L":"M "):"") + x+","+y.toFixed(1); } return p; };
+  const mk = (fn)=>{ const pts = []; for(let x=0;x<=1200;x+=4){ pts.push(x + "," + fn(x).toFixed(1)); } return pts.join(" "); };
   const w1 = mk(x=> 60 + Math.sin(x*0.021)*20*Math.sin(x*0.004) + Math.sin(x*0.11)*7);
   const w2 = mk(x=> 60 + Math.cos(x*0.017)*24*Math.cos(x*0.003+1) + Math.sin(x*0.09)*5);
   const w3 = mk(x=> 60 + Math.sin(x*0.03+2)*14*Math.sin(x*0.006) + Math.cos(x*0.13)*4);
-  $("heroWave").setAttribute("points", w1);
-  $("heroWave2").setAttribute("points", w2);
-  $("heroWave3").setAttribute("points", w3);
+  const el1 = $("heroWave"); if(el1) el1.setAttribute("points", w1);
+  const el2 = $("heroWave2"); if(el2) el2.setAttribute("points", w2);
+  const el3 = $("heroWave3"); if(el3) el3.setAttribute("points", w3);
 }
 
 /* ---------------- FAQ + modals ---------------- */
@@ -2947,7 +2956,7 @@ window.VT_Stickman = (function(){
   let scene, camera, renderer, animFrame;
   let stickmanGroup, headGroup, rightArmGroup, leftArmGroup, wandMesh, laserBeamMesh, forceShieldMesh;
   let soundWaves = [], orbitRings = [], particles = [], dataBars = [];
-  let scannerLight, coreLight;
+  let scannerLight, coreLight, keyLight, rimLight;
   let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
   let currentAction = 'idle';
   let actionStartTime = 0;
@@ -2986,8 +2995,21 @@ window.VT_Stickman = (function(){
       if(!audioCtx) return;
       const now = audioCtx.currentTime;
 
-      if(type === 'scan'){
-        // Sci-Fi frequency sweep
+      if(type === 'live'){
+        // Radar sonar chirp
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.25);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if(type === 'scan' || type === 'recorded'){
+        // Sci-Fi laser frequency sweep
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = "sawtooth";
@@ -3000,8 +3022,8 @@ window.VT_Stickman = (function(){
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.35);
-      } else if(type === 'shield'){
-        // Resonant force field hum
+      } else if(type === 'shield' || type === 'evidence'){
+        // Resonant cryptographic force field hum
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = "sine";
@@ -3014,6 +3036,20 @@ window.VT_Stickman = (function(){
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.6);
+      } else if(type === 'genai'){
+        // Futuristic neural synthesizer chord
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(f, now + idx * 0.05);
+          gain.gain.setValueAtTime(0.06, now + idx * 0.05);
+          gain.gain.linearRampToValueAtTime(0, now + idx * 0.05 + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.05);
+          osc.stop(now + idx * 0.05 + 0.3);
+        });
       } else if(type === 'interrogate'){
         // High-tech investigation chime
         [587.33, 880, 1174.66].forEach((f, idx) => {
@@ -3078,20 +3114,32 @@ window.VT_Stickman = (function(){
       oscCtx.stroke();
 
       // Oscilloscope wave
-      const isScan = currentAction === 'scan';
+      const isScan = currentAction === 'scan' || currentAction === 'recorded';
+      const isEvidence = currentAction === 'shield' || currentAction === 'evidence';
+      const isGenAi = currentAction === 'genai';
       const isDance = currentAction === 'dance';
-      const amp = isScan ? 14 : isDance ? 12 : 7;
-      const freq = isScan ? 0.065 : 0.04;
-      phase += isScan ? 0.22 : 0.08;
+
+      const amp = isScan ? 14 : isEvidence ? 10 : isGenAi ? 13 : isDance ? 12 : 7;
+      const freq = isScan ? 0.065 : isEvidence ? 0.045 : isGenAi ? 0.055 : 0.04;
+      phase += isScan ? 0.22 : isGenAi ? 0.18 : isEvidence ? 0.12 : 0.08;
 
       oscCtx.beginPath();
-      oscCtx.strokeStyle = isScan ? "#00E5FF" : isDance ? "#B388FF" : "#00E676";
+      oscCtx.strokeStyle = isScan ? "#FFB300" : isEvidence ? "#00E676" : isGenAi ? "#B388FF" : "#00E5FF";
       oscCtx.lineWidth = 2.2;
       oscCtx.shadowColor = oscCtx.strokeStyle;
       oscCtx.shadowBlur = 8;
 
       for(let x=0; x<w; x++){
-        const y = h/2 + Math.sin(x * freq + phase) * amp + Math.sin(x * 0.09 - phase * 1.5) * (amp * 0.4);
+        let y;
+        if(isEvidence){
+          // Cryptographic digital pulse wave
+          y = h/2 + (Math.sin(x * freq + phase) > 0 ? amp : -amp) * 0.7 + Math.sin(x * 0.1) * 2;
+        } else if(isGenAi){
+          // Multi-harmonic neural wave
+          y = h/2 + Math.sin(x * freq + phase) * amp + Math.sin(x * 0.12 - phase * 2) * (amp * 0.6) + Math.cos(x * 0.03 + phase) * 4;
+        } else {
+          y = h/2 + Math.sin(x * freq + phase) * amp + Math.sin(x * 0.09 - phase * 1.5) * (amp * 0.4);
+        }
         if(x === 0) oscCtx.moveTo(x, y);
         else oscCtx.lineTo(x, y);
       }
@@ -3130,11 +3178,11 @@ window.VT_Stickman = (function(){
     const ambient = new THREE.AmbientLight(0xd4e4ff, 0.95);
     scene.add(ambient);
 
-    const keyLight = new THREE.DirectionalLight(0x00E5FF, 2.4);
+    keyLight = new THREE.DirectionalLight(0x00E5FF, 2.4);
     keyLight.position.set(4, 7, 5);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x7C4DFF, 1.8);
+    rimLight = new THREE.DirectionalLight(0x7C4DFF, 1.8);
     rimLight.position.set(-4, 5, -3);
     scene.add(rimLight);
 
@@ -3568,68 +3616,165 @@ window.VT_Stickman = (function(){
     mouse.targetY = (e.clientY - cy) / (window.innerHeight * 0.5);
   }
 
+  let currentMode = 'live';
+
   function onClickStickman(){
-    const actions = ['scan', 'shield', 'interrogate', 'dance'];
-    const next = actions[Math.floor(Math.random() * actions.length)];
-    doAction(next);
+    const modes = ['live', 'recorded', 'evidence', 'genai'];
+    const idx = modes.indexOf(currentMode);
+    const next = modes[(idx + 1) % modes.length];
+    setMode(next);
   }
 
-  function doAction(action){
-    currentAction = action;
+  function setMode(mode){
+    currentMode = mode;
+    currentAction = mode;
     actionStartTime = performance.now();
 
-    const quoteEl = document.getElementById("stickmanQuote");
+    // Map legacy names to mode keys
+    let modeKey = mode;
+    if(mode === 'scan') modeKey = 'recorded';
+    if(mode === 'shield') modeKey = 'evidence';
+
+    // Update Buttons & Chips Active State
+    const allChips = ['chip-live', 'chip-recorded', 'chip-evidence', 'chip-genai'];
+    const allBtns = ['btn-mode-live', 'btn-mode-recorded', 'btn-mode-evidence', 'btn-mode-genai'];
+    allChips.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.remove('active');
+    });
+    allBtns.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.remove('active');
+    });
+
+    const activeChip = document.getElementById('chip-' + modeKey);
+    const activeBtn = document.getElementById('btn-mode-' + modeKey);
+    if(activeChip) activeChip.classList.add('active');
+    if(activeBtn) activeBtn.classList.add('active');
+
+    // UI Elements
+    const headerChip = document.getElementById("sgHeaderModeChip");
     const badgeEl = document.getElementById("sgActionBadge");
+    const quoteEl = document.getElementById("stickmanQuote");
+    const oscFreq = document.getElementById("sgOscFreq");
+
+    const m1Lbl = document.getElementById("sgMeter1Lbl");
+    const m2Lbl = document.getElementById("sgMeter2Lbl");
+    const m3Lbl = document.getElementById("sgMeter3Lbl");
+    const m4Lbl = document.getElementById("sgMeter4Lbl");
+
     const jitFill = document.getElementById("sgJitterFill");
     const jitVal = document.getElementById("sgJitterVal");
     const vocFill = document.getElementById("sgVocoderFill");
     const vocVal = document.getElementById("sgVocoderVal");
     const formFill = document.getElementById("sgFormantFill");
     const formVal = document.getElementById("sgFormantVal");
-    const oscFreq = document.getElementById("sgOscFreq");
+    const evFill = document.getElementById("sgEvidenceFill");
+    const evVal = document.getElementById("sgEvidenceVal");
 
-    playSfx(action);
+    playSfx(modeKey);
 
-    if(action === 'scan'){
-      if(badgeEl) badgeEl.textContent = "🔍 360° LASER DEEP-SCAN";
-      if(quoteEl) quoteEl.textContent = "\"Deploying high-frequency directional acoustic radar! Deconvolving synthetic neural vocoder layers in real-time... ⚡\"";
-      if(jitFill) jitFill.style.width = "95%";
-      if(jitVal) jitVal.textContent = "0.95% Human ✓";
+    if(modeKey === 'live'){
+      if(headerChip){ headerChip.textContent = "⚡ MODE: LIVE CALL INTERCEPT"; headerChip.style.borderColor = "#00E5FF"; headerChip.style.color = "#00E5FF"; }
+      if(badgeEl){ badgeEl.textContent = "📡 360° LIVE RADAR INTERCEPT"; badgeEl.style.color = "#00E5FF"; }
+      if(quoteEl) quoteEl.textContent = "\"Live Call Mode active: Continuous stream monitoring. Micro-jitter acoustic radar locked on caller frequency stream! 🎧\"";
+      if(oscFreq) oscFreq.textContent = "142.8 Hz · STREAM LOCKED";
+      if(m1Lbl) m1Lbl.textContent = "Vocal Jitter Radar";
+      if(jitFill) jitFill.style.width = "86%";
+      if(jitVal) jitVal.textContent = "0.86% Human ✓";
+      if(m2Lbl) m2Lbl.textContent = "Packet Integrity";
       if(vocFill) vocFill.style.width = "99%";
-      if(vocVal) vocVal.textContent = "99% Clean ✓";
+      if(vocVal) vocVal.textContent = "99.8% Clean ✓";
+      if(m3Lbl) m3Lbl.textContent = "Latency & Jitter Buffer";
       if(formFill) formFill.style.width = "94%";
-      if(formVal) formVal.textContent = "72ms Organic";
+      if(formVal) formVal.textContent = "16ms Ultra-Low";
+      if(m4Lbl) m4Lbl.textContent = "SHA-256 Hash Stream";
+      if(evFill) evFill.style.width = "100%";
+      if(evVal){ evVal.textContent = "Live Chain ✓"; evVal.style.color = "#00E676"; }
+
+      // 3D Colors
+      if(keyLight) keyLight.color.setHex(0x00E5FF);
+      if(coreLight) coreLight.color.setHex(0x00E5FF);
+      if(scannerLight) scannerLight.color.setHex(0x00FFFF);
+
+    } else if(modeKey === 'recorded'){
+      if(headerChip){ headerChip.textContent = "🔍 MODE: RECORDED CALL DEEP-SCAN"; headerChip.style.borderColor = "#FFB300"; headerChip.style.color = "#FFB300"; }
+      if(badgeEl){ badgeEl.textContent = "🔍 VOLUMETRIC LASER DECONVOLUTION"; badgeEl.style.color = "#FFB300"; }
+      if(quoteEl) quoteEl.textContent = "\"Recorded Call Mode active: Volumetric laser scanner decomposing glottal wave kinematics and vocoder phase lock patterns! ⚡\"";
       if(oscFreq) oscFreq.textContent = "284.2 Hz · ULTRA-HIGH SCAN";
-    } else if(action === 'shield'){
-      if(badgeEl) badgeEl.textContent = "🛡️ CRYPTOGRAPHIC FORCE SHIELD";
-      if(quoteEl) quoteEl.textContent = "\"Force Shield deployed! Anchoring SHA-256 tamper-proof ledger blocks across banking nodes. Zero fraud permitted! 🛡️\"";
-      if(jitFill) jitFill.style.width = "88%";
-      if(vocFill) vocFill.style.width = "97%";
+      if(m1Lbl) m1Lbl.textContent = "Vocoder Phase Roll-off";
+      if(jitFill) jitFill.style.width = "96%";
+      if(jitVal) jitVal.textContent = "99.2% Clean ✓";
+      if(m2Lbl) m2Lbl.textContent = "Glottal Micro-Jitter";
+      if(vocFill) vocFill.style.width = "92%";
+      if(vocVal) vocVal.textContent = "0.94% Natural ✓";
+      if(m3Lbl) m3Lbl.textContent = "Formant Transition Inertia";
+      if(formFill) formFill.style.width = "88%";
+      if(formVal) formVal.textContent = "74ms Organic";
+      if(m4Lbl) m4Lbl.textContent = "Synthetic Smoothing Check";
+      if(evFill) evFill.style.width = "100%";
+      if(evVal){ evVal.textContent = "Passed ✓"; evVal.style.color = "#FFB300"; }
+
+      // 3D Colors
+      if(keyLight) keyLight.color.setHex(0xFFB300);
+      if(coreLight) coreLight.color.setHex(0xFFB300);
+      if(scannerLight) scannerLight.color.setHex(0xFF8F00);
+
+    } else if(modeKey === 'evidence'){
+      if(headerChip){ headerChip.textContent = "🛡️ MODE: SHA-256 EVIDENCE VAULT"; headerChip.style.borderColor = "#00E676"; headerChip.style.color = "#00E676"; }
+      if(badgeEl){ badgeEl.textContent = "🛡️ CRYPTOGRAPHIC FORCE SHIELD"; badgeEl.style.color = "#00E676"; }
+      if(quoteEl) quoteEl.textContent = "\"Evidence Vault active: Audio hash cryptographically signed with SHA-256 and anchored for legal court admissibility! 🛡️\"";
       if(oscFreq) oscFreq.textContent = "160.0 Hz · SHIELD HARMONIC";
-    } else if(action === 'interrogate'){
-      if(badgeEl) badgeEl.textContent = "🎧 FORENSIC INTERROGATION";
-      if(quoteEl) quoteEl.textContent = "\"Analyzing glottal cycle periodicity... Biological laryngeal flutter detected. Vocal tract impedance confirms genuine human speaker! 🔎\"";
-      if(jitFill) jitFill.style.width = "91%";
-      if(jitVal) jitVal.textContent = "0.91% Human ✓";
+      if(m1Lbl) m1Lbl.textContent = "Digital Acoustic Hash";
+      if(jitFill) jitFill.style.width = "100%";
+      if(jitVal) jitVal.textContent = "SHA-256 Valid ✓";
+      if(m2Lbl) m2Lbl.textContent = "On-Chain Ledger Anchor";
+      if(vocFill) vocFill.style.width = "100%";
+      if(vocVal) vocVal.textContent = "Block #409282";
+      if(m3Lbl) m3Lbl.textContent = "Nonce & HMAC Signature";
+      if(formFill) formFill.style.width = "100%";
+      if(formVal) formVal.textContent = "Tamper-Proof ✓";
+      if(m4Lbl) m4Lbl.textContent = "Court Admissibility";
+      if(evFill) evFill.style.width = "100%";
+      if(evVal){ evVal.textContent = "Certified 100% ✓"; evVal.style.color = "#00E676"; }
+
+      // 3D Colors
+      if(keyLight) keyLight.color.setHex(0x00E676);
+      if(coreLight) coreLight.color.setHex(0x00E676);
+      if(scannerLight) scannerLight.color.setHex(0x00C853);
+
+    } else if(modeKey === 'genai'){
+      if(headerChip){ headerChip.textContent = "🧠 MODE: GEN AI LLAMA 3.3 CORE"; headerChip.style.borderColor = "#B388FF"; headerChip.style.color = "#B388FF"; }
+      if(badgeEl){ badgeEl.textContent = "🧠 OPENROUTER DUAL-KEY NEURAL CORE"; badgeEl.style.color = "#B388FF"; }
+      if(quoteEl) quoteEl.textContent = "\"Gen AI Mode active: OpenRouter Llama 3.3 70B deep reasoning comparing biological phonation vs synthetic neural vocoders! 🔬\"";
+      if(oscFreq) oscFreq.textContent = "210.5 Hz · NEURAL MATRIX";
+      if(m1Lbl) m1Lbl.textContent = "Biomechanical Kinematics";
+      if(jitFill) jitFill.style.width = "95%";
+      if(jitVal) jitVal.textContent = "95% Biological";
+      if(m2Lbl) m2Lbl.textContent = "Neural Vocoder Artifact Risk";
       if(vocFill) vocFill.style.width = "98%";
-      if(oscFreq) oscFreq.textContent = "196.4 Hz · SPECTRAL AUDIT";
-    } else if(action === 'dance'){
-      if(badgeEl) badgeEl.textContent = "🕺 ACOUSTIC BEAT GROOVE";
-      if(quoteEl) quoteEl.textContent = "\"Grooving to genuine human acoustics! Dynamic pitch variance is 100% organic and rich in natural harmonics. 🕺✨\"";
-      if(jitFill) jitFill.style.width = "89%";
-      if(vocFill) vocFill.style.width = "93%";
-      if(oscFreq) oscFreq.textContent = "128.0 Hz · RHYTHM LOCK";
+      if(vocVal) vocVal.textContent = "< 2% Clean ✓";
+      if(m3Lbl) m3Lbl.textContent = "Suspected Architecture";
+      if(formFill) formFill.style.width = "90%";
+      if(formVal) formVal.textContent = "Human Vocal Tract";
+      if(m4Lbl) m4Lbl.textContent = "OpenRouter Auto-Failover";
+      if(evFill) evFill.style.width = "100%";
+      if(evVal){ evVal.textContent = "Dual-Key Active ✓"; evVal.style.color = "#B388FF"; }
+
+      // 3D Colors
+      if(keyLight) keyLight.color.setHex(0xB388FF);
+      if(coreLight) coreLight.color.setHex(0xB388FF);
+      if(scannerLight) scannerLight.color.setHex(0x7C4DFF);
     }
 
     if(quoteTimer) clearTimeout(quoteTimer);
     quoteTimer = setTimeout(() => {
-      currentAction = 'idle';
-      if(badgeEl) badgeEl.textContent = "RADAR ACTIVE";
       const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
       if(quoteEl) quoteEl.textContent = randomQuote;
-      if(oscFreq) oscFreq.textContent = "142.8 Hz · STABLE";
-    }, 5500);
+    }, 7000);
   }
+
+  const doAction = setMode;
 
   function animate(t){
     animFrame = requestAnimationFrame(animate);
@@ -3673,7 +3818,8 @@ window.VT_Stickman = (function(){
 
     // Data slate equalizer bars bounce in real-time
     dataBars.forEach((b, idx) => {
-      const h = 0.04 + Math.abs(Math.sin(time * 6 + idx * 0.8)) * 0.18;
+      const speed = currentMode === 'genai' ? 12 : 6;
+      const h = 0.04 + Math.abs(Math.sin(time * speed + idx * 0.8)) * (currentMode === 'genai' ? 0.22 : 0.18);
       b.scale.y = h / 0.12;
       b.position.y = h * 0.5;
     });
@@ -3690,25 +3836,27 @@ window.VT_Stickman = (function(){
       coreLight.intensity = 2.4 + Math.sin(time * 3.5) * 0.8;
     }
 
-    // Action animations
-    const elapsed = (performance.now() - actionStartTime) * 0.001;
+    // Mode-specific 3D animations
+    const isScan = currentMode === 'recorded';
+    const isShield = currentMode === 'evidence';
+    const isGenAi = currentMode === 'genai';
 
-    if(currentAction === 'scan'){
+    if(isScan){
       // Laser scan forward beam
       if(rightArmGroup){
-        rightArmGroup.rotation.x = -1.25 + Math.sin(elapsed * 5) * 0.12;
+        rightArmGroup.rotation.x = -1.25 + Math.sin(time * 4) * 0.1;
         rightArmGroup.rotation.y = mouse.x * 0.4;
       }
       if(laserBeamMesh){
-        laserBeamMesh.material.opacity = 0.55 + Math.sin(elapsed * 12) * 0.25;
+        laserBeamMesh.material.opacity = 0.6 + Math.sin(time * 10) * 0.25;
+        laserBeamMesh.material.color.setHex(0xFFB300);
         laserBeamMesh.rotation.y = time * 2;
       }
       if(scannerLight){
-        scannerLight.intensity = 4.5 + Math.sin(elapsed * 15) * 2;
-        scannerLight.color.setHex(0x00FFFF);
+        scannerLight.intensity = 4.5 + Math.sin(time * 12) * 2;
       }
       if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
-    } else if(currentAction === 'shield'){
+    } else if(isShield){
       // Deploy Force Shield
       if(forceShieldMesh){
         forceShieldMesh.material.opacity = Math.min(0.68, forceShieldMesh.material.opacity + 0.05);
@@ -3718,29 +3866,19 @@ window.VT_Stickman = (function(){
         forceShieldMesh.scale.set(scale, scale, scale);
       }
       if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
-    } else if(currentAction === 'interrogate'){
-      // Interrogation pose: Right hand taps earphone / listens intently
-      if(rightArmGroup){
-        rightArmGroup.rotation.x = -1.5;
-        rightArmGroup.rotation.z = 0.75;
-      }
+    } else if(isGenAi){
+      // Neural Core: High particle turbulence
+      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
+      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
       if(leftArmGroup){
-        leftArmGroup.rotation.x = -0.5;
-        leftArmGroup.rotation.z = -0.3;
+        leftArmGroup.rotation.x = -0.3 + Math.sin(time * 3) * 0.1;
       }
-      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
-      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
-    } else if(currentAction === 'dance'){
-      // Energetic groove bop
-      const beat = Math.sin(elapsed * 9);
-      if(headGroup) headGroup.rotation.z = beat * 0.25;
-      if(leftArmGroup) leftArmGroup.rotation.z = -0.35 + beat * 0.5;
-      if(rightArmGroup) rightArmGroup.rotation.z = 0.35 - beat * 0.5;
-      if(stickmanGroup) stickmanGroup.position.y = 0.05 + Math.abs(Math.sin(elapsed * 9)) * 0.14;
-      if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
-      if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
+      particles.forEach(p => {
+        p.position.y += p.userData.speedY * 1.5;
+        if(p.position.y > 2.8) p.position.y = 0.1;
+      });
     } else {
-      // Natural Idle Breathing
+      // Live Call Mode: Vigilant listening
       if(laserBeamMesh) laserBeamMesh.material.opacity = 0;
       if(forceShieldMesh) forceShieldMesh.material.opacity = Math.max(0, forceShieldMesh.material.opacity - 0.04);
       if(leftArmGroup) leftArmGroup.rotation.z = -0.15 + Math.sin(time * 2) * 0.05;
@@ -3763,6 +3901,7 @@ window.VT_Stickman = (function(){
   }
 
   return {
+    setMode: setMode,
     doAction: doAction,
     triggerRandom: onClickStickman,
     toggleSound: toggleSound
